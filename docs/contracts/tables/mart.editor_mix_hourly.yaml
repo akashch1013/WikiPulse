@@ -1,0 +1,45 @@
+name: mart.editor_mix_hourly
+store: postgres:mart
+owner_workstream: WS-transform
+grain: One row per (wiki_id, hour_utc, namespace_id, editor_type) for focus wikis.
+primary_key:
+- wiki_id
+- hour_utc
+- namespace_id
+- editor_type
+partitioning: range by month on hour_utc
+indexes:
+- (wiki_id, hour_utc)
+freshness_sla: Published within 15 minutes of the gold build
+columns:
+- name: wiki_id
+  type: varchar
+  nullable: false
+  description: Wiki database name, e.g. enwiki.
+- name: hour_utc
+  type: timestamptz
+  nullable: false
+  description: Hour.
+- name: namespace_id
+  type: integer
+  nullable: false
+  description: Namespace.
+- name: editor_type
+  type: text
+  nullable: false
+  description: Editor type.
+- name: edits
+  type: bigint
+  nullable: false
+  description: Edits.
+- name: reverts
+  type: bigint
+  nullable: false
+  description: Reverts.
+- name: distinct_editors
+  type: bigint
+  nullable: false
+  description: Distinct editors.
+tests:
+  reconciliation: Row count and sum of measures per published partition equal gold.fct_revision for the same partition.
+notes: Published from gold.fct_revision by delete+insert per partition in one transaction.

@@ -1,0 +1,61 @@
+name: gold.fct_page_activity_hourly
+store: lake:gold
+owner_workstream: WS-transform
+grain: One row per (wiki_id, page_id, hour_utc) where the page had at least one edit or views at or above the wiki's activity
+  floor.
+primary_key:
+- wiki_id
+- page_id
+- hour_utc
+partitioning: wiki_id, hour_date
+sort_order:
+- wiki_id
+- hour_utc
+- page_id
+freshness_sla: Within 4 hours of hour end
+columns:
+- name: wiki_id
+  type: varchar
+  nullable: false
+  description: Wiki database name, e.g. enwiki.
+- name: page_id
+  type: bigint
+  nullable: false
+  description: Page ID.
+- name: hour_utc
+  type: timestamptz
+  nullable: false
+  description: Hour start.
+- name: hour_date
+  type: date
+  nullable: false
+  description: Partition column.
+- name: views
+  type: bigint
+  nullable: false
+  description: All access methods.
+- name: edits
+  type: integer
+  nullable: false
+  description: Revisions saved.
+- name: human_edits
+  type: integer
+  nullable: false
+  description: Edits by temp, registered, anonymous_ip.
+- name: bot_edits
+  type: integer
+  nullable: false
+  description: Edits by bots.
+- name: reverts
+  type: integer
+  nullable: false
+  description: Revert revisions.
+- name: distinct_editors
+  type: integer
+  nullable: false
+  description: Distinct editor_key.
+tests:
+  unique:
+  - - wiki_id
+    - page_id
+    - hour_utc

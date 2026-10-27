@@ -1,0 +1,48 @@
+name: mart.page_title_history
+store: postgres:mart
+owner_workstream: WS-transform
+grain: One row per (wiki_id, page_id, valid_from) title/namespace version for pages in mart.page_current.
+primary_key:
+- wiki_id
+- page_id
+- valid_from
+partitioning: none
+indexes:
+- (wiki_id, page_id, valid_from)
+freshness_sla: Published within 15 minutes of the gold build
+columns:
+- name: wiki_id
+  type: varchar
+  nullable: false
+  description: Wiki database name, e.g. enwiki.
+- name: page_id
+  type: bigint
+  nullable: false
+  description: Page ID.
+- name: title
+  type: text
+  nullable: false
+  description: Title.
+- name: namespace_id
+  type: integer
+  nullable: false
+  description: Namespace.
+- name: is_redirect
+  type: boolean
+  nullable: false
+  description: Redirect.
+- name: valid_from
+  type: timestamptz
+  nullable: false
+  description: From.
+- name: valid_to
+  type: timestamptz
+  nullable: false
+  description: To; 9999-12-31 for current.
+- name: is_deleted
+  type: boolean
+  nullable: false
+  description: Deleted.
+tests:
+  reconciliation: Row count and sum of measures per published partition equal gold.dim_page for the same partition.
+notes: Published from gold.dim_page by delete+insert per partition in one transaction.

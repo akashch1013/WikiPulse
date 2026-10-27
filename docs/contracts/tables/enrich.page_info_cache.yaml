@@ -1,0 +1,53 @@
+name: enrich.page_info_cache
+store: postgres:enrich
+owner_workstream: WS-batch
+grain: 'One row per (wiki_id, page_id): Action API page info and categories, cached 7 days.'
+primary_key:
+- wiki_id
+- page_id
+partitioning: none
+indexes:
+- (fetched_at)
+freshness_sla: Refreshed when older than 7 days and still referenced
+columns:
+- name: wiki_id
+  type: varchar
+  nullable: false
+  description: Wiki database name, e.g. enwiki.
+- name: page_id
+  type: bigint
+  nullable: false
+  description: Page ID.
+- name: namespace_id
+  type: integer
+  nullable: false
+  description: ns.
+- name: title
+  type: text
+  nullable: false
+  description: Title.
+- name: is_redirect
+  type: boolean
+  nullable: false
+  description: Redirect.
+- name: wikibase_item_id
+  type: text
+  nullable: true
+  description: pageprops.wikibase_item.
+- name: categories
+  type: text[]
+  nullable: false
+  description: Category titles.
+- name: hidden_categories
+  type: text[]
+  nullable: false
+  description: Hidden categories.
+- name: http_status
+  type: integer
+  nullable: false
+  description: Response status.
+- name: fetched_at
+  type: timestamptz
+  nullable: false
+  description: Fetch time.
+tests: {}

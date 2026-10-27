@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://wikipulse.local/contracts/events/wiki_activity_window.v1.json",
+  "title": "WikiPulse wiki activity window v1",
+  "description": "Per-wiki, per-editor-type aggregate for one closed 1-minute event-time tumbling window, emitted by the stream processor and upserted into stream.wiki_activity_minute keyed by (wiki_id, window_start, editor_type).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["wiki_id", "window_start", "window_end", "editor_type", "edits", "creates", "moves", "deletes", "reverts", "distinct_pages", "distinct_editors", "emitted_at"],
+  "properties": {
+    "wiki_id": {"type": "string"},
+    "window_start": {"type": "string", "format": "date-time"},
+    "window_end": {"type": "string", "format": "date-time"},
+    "editor_type": {"type": "string", "enum": ["bot", "temp", "registered", "anonymous_ip", "system"]},
+    "edits": {"type": "integer", "minimum": 0},
+    "creates": {"type": "integer", "minimum": 0},
+    "moves": {"type": "integer", "minimum": 0},
+    "deletes": {"type": "integer", "minimum": 0},
+    "reverts": {"type": "integer", "minimum": 0},
+    "distinct_pages": {"type": "integer", "minimum": 0},
+    "distinct_editors": {"type": "integer", "minimum": 0},
+    "emitted_at": {"type": "string", "format": "date-time"}
+  }
+}

@@ -1,0 +1,54 @@
+name: gold.fct_read_edit_overlap
+store: lake:gold
+owner_workstream: WS-transform
+grain: One row per (wiki_id, page_id, trending_hour, burst_window_start) where a read surge and an edit burst on the same
+  page are within 1 hour.
+primary_key:
+- wiki_id
+- page_id
+- trending_hour
+- burst_window_start
+partitioning: wiki_id
+sort_order:
+- wiki_id
+- trending_hour
+freshness_sla: Hourly
+columns:
+- name: wiki_id
+  type: varchar
+  nullable: false
+  description: Wiki database name, e.g. enwiki.
+- name: page_id
+  type: bigint
+  nullable: false
+  description: Page ID.
+- name: trending_hour
+  type: timestamptz
+  nullable: false
+  description: Trending hour.
+- name: burst_window_start
+  type: timestamptz
+  nullable: false
+  description: Burst start.
+- name: lead_minutes
+  type: integer
+  nullable: false
+  description: burst_window_start - trending_hour in minutes; negative means edits led reads.
+- name: views
+  type: bigint
+  nullable: false
+  description: Views in trending hour.
+- name: robust_z
+  type: double
+  nullable: false
+  description: Trending score.
+- name: burst_edits
+  type: integer
+  nullable: false
+  description: Edits in burst.
+tests:
+  unique:
+  - - wiki_id
+    - page_id
+    - trending_hour
+    - burst_window_start

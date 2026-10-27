@@ -1,0 +1,82 @@
+name: bronze.page_snapshot_xml
+store: lake:bronze
+owner_workstream: WS-batch
+grain: One row per <page> element in a stub-meta-current XML dump part, with its latest revision metadata.
+primary_key:
+- wiki_id
+- dump_date
+- page_id
+partitioning: wiki_id, dump_date
+sort_order:
+- wiki_id
+- dump_date
+- page_id
+freshness_sla: Latest complete monthly dump run loaded within 2 days of publication
+columns:
+- name: wiki_id
+  type: varchar
+  nullable: false
+  description: Wiki database name, e.g. enwiki.
+- name: dump_date
+  type: date
+  nullable: false
+  description: Dump run date, e.g. 2026-10-01.
+- name: page_id
+  type: bigint
+  nullable: false
+  description: <page><id>.
+- name: namespace_id
+  type: integer
+  nullable: false
+  description: <ns>.
+- name: title
+  type: varchar
+  nullable: false
+  description: <title> with namespace prefix, as in the dump.
+- name: redirect_title
+  type: varchar
+  nullable: true
+  description: <redirect title=...> target, null if not a redirect.
+- name: rev_id
+  type: bigint
+  nullable: false
+  description: Latest revision ID.
+- name: rev_timestamp
+  type: timestamptz
+  nullable: false
+  description: Latest revision timestamp.
+- name: rev_bytes
+  type: bigint
+  nullable: true
+  description: <text bytes=...>.
+- name: rev_sha1
+  type: varchar
+  nullable: true
+  description: <sha1>.
+- name: content_model
+  type: varchar
+  nullable: true
+  description: <model>.
+- name: source_file
+  type: varchar
+  nullable: false
+  description: Source file URL or Kafka topic/partition/offset range the row came from.
+- name: loaded_at
+  type: timestamptz
+  nullable: false
+  description: Time the row was written (UTC).
+- name: run_id
+  type: varchar
+  nullable: false
+  description: Orchestrator run or sink batch identifier.
+tests:
+  not_null:
+  - page_id
+  - namespace_id
+  - title
+  - rev_id
+  unique:
+  - - wiki_id
+    - dump_date
+    - page_id
+  reconciliation: Each part's streamed MD5 equals the published md5sums.txt entry before the partition commits.

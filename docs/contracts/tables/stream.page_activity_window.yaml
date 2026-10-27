@@ -1,0 +1,51 @@
+name: stream.page_activity_window
+store: postgres:stream
+owner_workstream: WS-stream
+grain: One row per (wiki_id, page_id, window_start) for 60-minute hopping windows (5-minute step) on focus wikis with at least
+  2 edits; provisional.
+primary_key:
+- wiki_id
+- page_id
+- window_start
+partitioning: range by month on window_start; 3-day retention
+indexes:
+- (wiki_id, window_start, human_edits DESC)
+freshness_sla: Window end + 5 min grace + 1 min
+columns:
+- name: wiki_id
+  type: varchar
+  nullable: false
+  description: Wiki database name, e.g. enwiki.
+- name: page_id
+  type: bigint
+  nullable: false
+  description: Page ID.
+- name: window_start
+  type: timestamptz
+  nullable: false
+  description: Window start.
+- name: window_end
+  type: timestamptz
+  nullable: false
+  description: Window end.
+- name: edits
+  type: integer
+  nullable: false
+  description: Edits.
+- name: human_edits
+  type: integer
+  nullable: false
+  description: Non-bot edits.
+- name: reverts
+  type: integer
+  nullable: false
+  description: Reverts.
+- name: distinct_editors
+  type: integer
+  nullable: false
+  description: Distinct editor keys.
+- name: emitted_at
+  type: timestamptz
+  nullable: false
+  description: Emission time.
+tests: {}

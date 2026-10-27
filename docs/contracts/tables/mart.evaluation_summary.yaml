@@ -1,0 +1,52 @@
+name: mart.evaluation_summary
+store: postgres:mart
+owner_workstream: WS-transform
+grain: One row per (method, label_set, wiki_id) over the evaluation window.
+primary_key:
+- method
+- label_set
+- wiki_id
+partitioning: none
+indexes: []
+freshness_sla: Published within 15 minutes of the gold build
+columns:
+- name: method
+  type: text
+  nullable: false
+  description: Method.
+- name: label_set
+  type: text
+  nullable: false
+  description: Label set.
+- name: wiki_id
+  type: varchar
+  nullable: false
+  description: Wiki database name, e.g. enwiki.
+- name: window_start
+  type: date
+  nullable: false
+  description: First day.
+- name: window_end
+  type: date
+  nullable: false
+  description: Last day.
+- name: days
+  type: integer
+  nullable: false
+  description: Days evaluated.
+- name: mean_precision_at_20
+  type: double precision
+  nullable: false
+  description: Mean daily precision@20.
+- name: mean_recall
+  type: double precision
+  nullable: true
+  description: Mean daily recall.
+- name: computed_at
+  type: timestamptz
+  nullable: false
+  description: Computation time.
+tests:
+  reconciliation: Row count and sum of measures per published partition equal gold.eval_detection_daily + gold.eval_revert_agreement
+    for the same partition.
+notes: Published from gold.eval_detection_daily + gold.eval_revert_agreement by delete+insert per partition in one transaction.

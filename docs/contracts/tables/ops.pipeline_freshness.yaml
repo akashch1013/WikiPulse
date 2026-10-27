@@ -1,0 +1,27 @@
+name: ops.pipeline_freshness
+store: postgres:ops (view)
+owner_workstream: WS-db
+grain: 'One row per dataset: latest complete period and lag.'
+primary_key:
+- dataset
+partitioning: none
+indexes: []
+freshness_sla: Computed on read
+columns:
+- name: dataset
+  type: text
+  nullable: false
+  description: stream, pageviews_hourly, page_snapshot, mediawiki_history, marts.
+- name: last_complete_period
+  type: timestamptz
+  nullable: true
+  description: Latest fully loaded period end.
+- name: lag_seconds
+  type: bigint
+  nullable: true
+  description: now() - last_complete_period.
+- name: source_detail
+  type: text
+  nullable: true
+  description: Where the value came from.
+tests: {}

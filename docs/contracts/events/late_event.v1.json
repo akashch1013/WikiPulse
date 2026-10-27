@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://wikipulse.local/contracts/events/late_event.v1.json",
+  "title": "WikiPulse late event v1",
+  "description": "Record of an event that arrived after its event-time window had closed (window end + grace). Written to topic wikipulse.page_change.late.v1. The event itself is still in the bronze layer and is counted by the batch recompute.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["event_id", "wiki_id", "page_id", "event_dt", "observed_at", "window_kind", "window_start", "window_end", "lateness_seconds"],
+  "properties": {
+    "event_id": {"type": "string", "format": "uuid"},
+    "wiki_id": {"type": "string"},
+    "page_id": {"type": "integer"},
+    "event_dt": {"type": "string", "format": "date-time"},
+    "observed_at": {"type": "string", "format": "date-time", "description": "Processing time at which the late arrival was detected."},
+    "window_kind": {"type": "string", "enum": ["wiki_minute", "page_hour_hopping"]},
+    "window_start": {"type": "string", "format": "date-time"},
+    "window_end": {"type": "string", "format": "date-time"},
+    "lateness_seconds": {"type": "number", "minimum": 0, "description": "Seconds between window close (end + grace) and the watermark at detection."}
+  }
+}

@@ -1,0 +1,61 @@
+name: bronze.eval_label_links
+store: lake:bronze
+owner_workstream: WS-batch
+grain: 'One row per (label_set, day, source_rev_id, linked_title): an outgoing article link from a labelling page revision,
+  as returned by the Action API.'
+primary_key:
+- label_set
+- day
+- source_rev_id
+- linked_title
+partitioning: label_set
+sort_order:
+- label_set
+- day
+freshness_sla: Daily, for the evaluation window
+columns:
+- name: label_set
+  type: varchar
+  nullable: false
+  description: current_events or main_page.
+- name: day
+  type: date
+  nullable: false
+  description: Label day.
+- name: wiki_id
+  type: varchar
+  nullable: false
+  description: Wiki database name, e.g. enwiki.
+- name: source_page
+  type: varchar
+  nullable: false
+  description: Labelling page title, e.g. Portal:Current_events/2026_October_27.
+- name: source_rev_id
+  type: bigint
+  nullable: false
+  description: Revision of the labelling page.
+- name: linked_title
+  type: varchar
+  nullable: false
+  description: Linked title (namespace 0) as returned by the API.
+- name: linked_page_id
+  type: bigint
+  nullable: true
+  description: Page ID from the API, redirects not yet resolved.
+- name: source_file
+  type: varchar
+  nullable: false
+  description: Source file URL or Kafka topic/partition/offset range the row came from.
+- name: loaded_at
+  type: timestamptz
+  nullable: false
+  description: Time the row was written (UTC).
+- name: run_id
+  type: varchar
+  nullable: false
+  description: Orchestrator run or sink batch identifier.
+tests:
+  accepted_values:
+    label_set:
+    - current_events
+    - main_page

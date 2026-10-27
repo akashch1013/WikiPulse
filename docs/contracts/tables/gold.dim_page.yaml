@@ -1,0 +1,66 @@
+name: gold.dim_page
+store: lake:gold (view)
+owner_workstream: WS-transform
+grain: One row per version of a page (SCD type 2). A view over silver.page_versions with the same columns and grain, exposed
+  as the page dimension of the star schema.
+primary_key:
+- page_sk
+partitioning: inherits silver.page_versions
+sort_order:
+- wiki_id
+- page_id
+- valid_from
+freshness_sla: Same as silver.page_versions
+columns:
+- name: page_sk
+  type: bigint
+  nullable: false
+  description: Surrogate key.
+- name: wiki_id
+  type: varchar
+  nullable: false
+  description: Wiki database name, e.g. enwiki.
+- name: page_id
+  type: bigint
+  nullable: false
+  description: Durable page identity.
+- name: title
+  type: varchar
+  nullable: false
+  description: Title during this version.
+- name: namespace_id
+  type: integer
+  nullable: false
+  description: Namespace.
+- name: is_redirect
+  type: boolean
+  nullable: false
+  description: Redirect.
+- name: redirect_target_page_id
+  type: bigint
+  nullable: true
+  description: Redirect target.
+- name: valid_from
+  type: timestamptz
+  nullable: false
+  description: Version start (inclusive).
+- name: valid_to
+  type: timestamptz
+  nullable: false
+  description: Version end (exclusive); 9999-12-31 for current.
+- name: is_current
+  type: boolean
+  nullable: false
+  description: Current version.
+- name: is_deleted
+  type: boolean
+  nullable: false
+  description: Deleted during this version.
+- name: source
+  type: varchar
+  nullable: false
+  description: snapshot or stream.
+tests:
+  relationships:
+  - column: page_sk
+    to: silver.page_versions.page_sk

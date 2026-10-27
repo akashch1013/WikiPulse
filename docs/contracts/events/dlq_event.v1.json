@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://wikipulse.local/contracts/events/dlq_event.v1.json",
+  "title": "WikiPulse dead-letter event v1",
+  "description": "Event that could not be processed, written to topic wikipulse.page_change.dlq.v1 with the reason attached. The payload is the upstream event after pseudonymisation of performer fields where the payload parsed; unparseable payloads are stored as received.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["failed_at", "stage", "reason_code", "reason_detail", "source_position", "payload"],
+  "properties": {
+    "failed_at": {"type": "string", "format": "date-time"},
+    "stage": {"type": "string", "enum": ["ingest", "stream_processor", "lake_sink"]},
+    "reason_code": {"type": "string", "enum": ["schema_invalid", "unknown_schema_major", "json_decode_error", "future_timestamp", "missing_page_id", "oversize"]},
+    "reason_detail": {"type": "string", "maxLength": 4000, "description": "Validator message or exception summary, e.g. the failing JSON pointer."},
+    "upstream_schema": {"type": ["string", "null"]},
+    "source_position": {"type": "string", "description": "SSE Last-Event-ID for ingest failures, or topic/partition/offset for downstream failures."},
+    "payload": {"type": "string", "maxLength": 900000, "description": "Original event JSON, truncated to 900000 bytes to stay under the 1 MB Event Hubs message limit."}
+  }
+}

@@ -1,0 +1,76 @@
+name: gold.fct_revision
+store: lake:gold
+owner_workstream: WS-transform
+grain: 'One row per (wiki_id, rev_id): a saved revision on a focus wiki, from the stream with History TSV for earlier periods.'
+primary_key:
+- wiki_id
+- rev_id
+partitioning: wiki_id, rev_date
+sort_order:
+- wiki_id
+- page_id
+- rev_ts
+freshness_sla: Hourly
+columns:
+- name: wiki_id
+  type: varchar
+  nullable: false
+  description: Wiki database name, e.g. enwiki.
+- name: rev_id
+  type: bigint
+  nullable: false
+  description: Revision ID.
+- name: page_id
+  type: bigint
+  nullable: false
+  description: Page ID.
+- name: namespace_id
+  type: integer
+  nullable: false
+  description: Namespace at edit time.
+- name: rev_ts
+  type: timestamptz
+  nullable: false
+  description: Revision time.
+- name: rev_date
+  type: date
+  nullable: false
+  description: Partition column.
+- name: editor_type
+  type: varchar
+  nullable: false
+  description: Editor type.
+- name: editor_key
+  type: char(32)
+  nullable: true
+  description: Pseudonymous key.
+- name: is_revert
+  type: boolean
+  nullable: false
+  description: MediaWiki-detected revert (stream) or identity revert (history).
+- name: revert_method
+  type: varchar
+  nullable: true
+  description: rollback, undo, manual; null for history rows.
+- name: bytes_delta
+  type: bigint
+  nullable: true
+  description: Size change vs parent.
+- name: source
+  type: varchar
+  nullable: false
+  description: stream or history.
+tests:
+  unique:
+  - - wiki_id
+    - rev_id
+  accepted_values:
+    editor_type:
+    - bot
+    - temp
+    - registered
+    - anonymous_ip
+    - system
+    source:
+    - stream
+    - history

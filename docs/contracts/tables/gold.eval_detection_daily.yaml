@@ -1,0 +1,57 @@
+name: gold.eval_detection_daily
+store: lake:gold
+owner_workstream: WS-transform
+grain: 'One row per (method, label_set, wiki_id, day): detection quality for one day.'
+primary_key:
+- method
+- label_set
+- wiki_id
+- day
+partitioning: none
+sort_order:
+- method
+- day
+freshness_sla: Daily
+columns:
+- name: method
+  type: varchar
+  nullable: false
+  description: trending_robust_z, baseline_raw_views, baseline_dod_ratio, edit_burst_poisson, baseline_raw_edits.
+- name: label_set
+  type: varchar
+  nullable: false
+  description: current_events or main_page.
+- name: wiki_id
+  type: varchar
+  nullable: false
+  description: Wiki database name, e.g. enwiki.
+- name: day
+  type: date
+  nullable: false
+  description: Day.
+- name: precision_at_20
+  type: double
+  nullable: false
+  description: Share of top-20 pages that are labelled.
+- name: recall
+  type: double
+  nullable: true
+  description: Share of labelled pages above floor that were flagged.
+- name: n_labels
+  type: integer
+  nullable: false
+  description: Labelled pages that day.
+- name: n_flagged
+  type: integer
+  nullable: false
+  description: Pages flagged that day.
+tests:
+  unique:
+  - - method
+    - label_set
+    - wiki_id
+    - day
+  accepted_values:
+    label_set:
+    - current_events
+    - main_page

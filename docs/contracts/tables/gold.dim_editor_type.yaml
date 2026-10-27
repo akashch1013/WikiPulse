@@ -1,0 +1,31 @@
+name: gold.dim_editor_type
+store: lake:gold
+owner_workstream: WS-transform
+grain: One row per editor type.
+primary_key:
+- editor_type
+partitioning: none
+sort_order:
+- editor_type
+freshness_sla: Static
+columns:
+- name: editor_type
+  type: varchar
+  nullable: false
+  description: bot, temp, registered, anonymous_ip, system.
+- name: description
+  type: varchar
+  nullable: false
+  description: Classification rule.
+- name: is_human
+  type: boolean
+  nullable: false
+  description: temp, registered and anonymous_ip.
+tests:
+  accepted_values:
+    editor_type:
+    - bot
+    - temp
+    - registered
+    - anonymous_ip
+    - system

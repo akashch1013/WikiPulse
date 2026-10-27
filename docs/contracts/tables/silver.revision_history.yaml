@@ -1,0 +1,77 @@
+name: silver.revision_history
+store: lake:silver
+owner_workstream: WS-transform
+grain: One row per revision (wiki_id, rev_id) from the MediaWiki History TSV, latest snapshot wins.
+primary_key:
+- wiki_id
+- rev_id
+partitioning: wiki_id, event_month
+sort_order:
+- wiki_id
+- page_id
+- rev_ts
+freshness_sla: Monthly
+columns:
+- name: wiki_id
+  type: varchar
+  nullable: false
+  description: Wiki database name, e.g. enwiki.
+- name: rev_id
+  type: bigint
+  nullable: false
+  description: Revision ID.
+- name: rev_parent_id
+  type: bigint
+  nullable: true
+  description: Parent.
+- name: page_id
+  type: bigint
+  nullable: false
+  description: Page ID.
+- name: namespace_id
+  type: integer
+  nullable: false
+  description: Namespace.
+- name: rev_ts
+  type: timestamptz
+  nullable: false
+  description: Revision time.
+- name: event_month
+  type: date
+  nullable: false
+  description: Partition column.
+- name: editor_type
+  type: varchar
+  nullable: false
+  description: Mapped editor type.
+- name: editor_key
+  type: char(32)
+  nullable: true
+  description: Pseudonymous key.
+- name: is_identity_revert
+  type: boolean
+  nullable: false
+  description: Restores an earlier identical revision.
+- name: is_identity_reverted
+  type: boolean
+  nullable: false
+  description: Later reverted.
+- name: seconds_to_identity_revert
+  type: bigint
+  nullable: true
+  description: Seconds to revert.
+- name: snapshot
+  type: varchar
+  nullable: false
+  description: History snapshot used.
+tests:
+  unique:
+  - - wiki_id
+    - rev_id
+  accepted_values:
+    editor_type:
+    - bot
+    - temp
+    - registered
+    - anonymous_ip
+    - system

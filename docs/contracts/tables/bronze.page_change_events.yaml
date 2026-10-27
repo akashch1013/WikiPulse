@@ -1,0 +1,78 @@
+name: bronze.page_change_events
+store: lake:bronze
+owner_workstream: WS-stream
+grain: One row per Kafka message consumed from wikipulse.page_change.v1, as landed; duplicates from upstream replay are kept.
+primary_key:
+- kafka_partition
+- kafka_offset
+partitioning: ingest_date (date of ingested_at)
+sort_order:
+- ingest_date
+- kafka_partition
+- kafka_offset
+freshness_sla: Lag behind Kafka high watermark under 5 minutes
+columns:
+- name: event_id
+  type: uuid
+  nullable: false
+  description: Upstream meta.id.
+- name: event_dt
+  type: timestamptz
+  nullable: false
+  description: Event time.
+- name: ingested_at
+  type: timestamptz
+  nullable: false
+  description: Ingest receive time.
+- name: wiki_id
+  type: varchar
+  nullable: false
+  description: Wiki database name, e.g. enwiki.
+- name: page_id
+  type: bigint
+  nullable: false
+  description: MediaWiki page ID.
+- name: change_kind
+  type: varchar
+  nullable: false
+  description: Change kind from the event.
+- name: payload
+  type: json
+  nullable: false
+  description: Full page_change_event.v1 message.
+- name: kafka_partition
+  type: integer
+  nullable: false
+  description: Source partition.
+- name: kafka_offset
+  type: bigint
+  nullable: false
+  description: Source offset.
+- name: ingest_date
+  type: date
+  nullable: false
+  description: Partition column.
+- name: source_file
+  type: varchar
+  nullable: false
+  description: Source file URL or Kafka topic/partition/offset range the row came from.
+- name: loaded_at
+  type: timestamptz
+  nullable: false
+  description: Time the row was written (UTC).
+- name: run_id
+  type: varchar
+  nullable: false
+  description: Orchestrator run or sink batch identifier.
+tests:
+  not_null:
+  - event_id
+  - kafka_partition
+  - kafka_offset
+  unique:
+  - - kafka_partition
+    - kafka_offset
+  freshness:
+    column: ingested_at
+    warn_after_minutes: 10
+    error_after_minutes: 30

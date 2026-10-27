@@ -1,0 +1,57 @@
+name: gold.fct_pageviews_hourly
+store: lake:gold
+owner_workstream: WS-transform
+grain: 'One row per (wiki_id, page_id, hour_utc, access_method): user pageviews attributed to a page, redirects folded into
+  their target.'
+primary_key:
+- wiki_id
+- page_id
+- hour_utc
+- access_method
+partitioning: wiki_id, hour_date
+sort_order:
+- wiki_id
+- hour_utc
+- page_id
+freshness_sla: Within 4 hours of hour end
+columns:
+- name: wiki_id
+  type: varchar
+  nullable: false
+  description: Wiki database name, e.g. enwiki.
+- name: page_id
+  type: bigint
+  nullable: false
+  description: Page ID.
+- name: hour_utc
+  type: timestamptz
+  nullable: false
+  description: Hour start.
+- name: hour_date
+  type: date
+  nullable: false
+  description: Partition column.
+- name: access_method
+  type: varchar
+  nullable: false
+  description: desktop or mobile-web.
+- name: views
+  type: bigint
+  nullable: false
+  description: Total views including via redirects.
+- name: via_redirect_views
+  type: bigint
+  nullable: false
+  description: Views that arrived through redirect titles.
+tests:
+  unique:
+  - - wiki_id
+    - page_id
+    - hour_utc
+    - access_method
+  accepted_values:
+    access_method:
+    - desktop
+    - mobile-web
+  reconciliation: Daily sum per page vs silver.pageview_complete_daily on sample days; match rate stored in gold.dq_reconciliation.
+notes: Lake only; about 2.3M rows per hour for enwiki+dewiki. Not published to Postgres.

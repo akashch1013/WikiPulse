@@ -1,0 +1,31 @@
+name: ops.stream_checkpoint
+store: postgres:ops
+owner_workstream: WS-db
+grain: 'One row per stream consumer name: the last SSE position whose events are all acknowledged by Kafka.'
+primary_key:
+- consumer
+partitioning: none
+indexes: []
+freshness_sla: Updated every flush (<= 5 s)
+columns:
+- name: consumer
+  type: text
+  nullable: false
+  description: e.g. ingest.page_change.
+- name: last_event_id
+  type: jsonb
+  nullable: false
+  description: Last-Event-ID array.
+- name: last_event_dt
+  type: timestamptz
+  nullable: false
+  description: Event time of the last acknowledged event.
+- name: events_acked
+  type: bigint
+  nullable: false
+  description: Cumulative acknowledged events.
+- name: updated_at
+  type: timestamptz
+  nullable: false
+  description: Checkpoint time.
+tests: {}

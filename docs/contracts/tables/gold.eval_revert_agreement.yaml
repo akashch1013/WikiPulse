@@ -1,0 +1,46 @@
+name: gold.eval_revert_agreement
+store: lake:gold
+owner_workstream: WS-transform
+grain: 'One row per (wiki_id, day): agreement between stream revert flags and History TSV identity reverts for revisions present
+  in both.'
+primary_key:
+- wiki_id
+- day
+partitioning: none
+sort_order:
+- wiki_id
+- day
+freshness_sla: Monthly (after each History snapshot)
+columns:
+- name: wiki_id
+  type: varchar
+  nullable: false
+  description: Wiki database name, e.g. enwiki.
+- name: day
+  type: date
+  nullable: false
+  description: Day.
+- name: revisions_compared
+  type: bigint
+  nullable: false
+  description: Revisions in both sources.
+- name: both_revert
+  type: bigint
+  nullable: false
+  description: Flagged by both.
+- name: stream_only
+  type: bigint
+  nullable: false
+  description: Flagged by stream only.
+- name: history_only
+  type: bigint
+  nullable: false
+  description: Flagged by History only.
+- name: agreement_rate
+  type: double
+  nullable: false
+  description: (both + neither) / compared.
+tests:
+  unique:
+  - - wiki_id
+    - day

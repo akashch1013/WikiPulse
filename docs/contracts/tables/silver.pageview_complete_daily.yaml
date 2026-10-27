@@ -1,0 +1,41 @@
+name: silver.pageview_complete_daily
+store: lake:silver
+owner_workstream: WS-transform
+grain: One row per (wiki_id, day, page_id, access_method) from pageview_complete user files, page_id not null.
+primary_key:
+- wiki_id
+- day
+- page_id
+- access_method
+partitioning: day
+sort_order:
+- wiki_id
+- page_id
+freshness_sla: Sample days only
+columns:
+- name: wiki_id
+  type: varchar
+  nullable: false
+  description: Wiki database name, e.g. enwiki.
+- name: day
+  type: date
+  nullable: false
+  description: Day.
+- name: page_id
+  type: bigint
+  nullable: false
+  description: Page ID.
+- name: access_method
+  type: varchar
+  nullable: false
+  description: desktop or mobile-web (mobile-app excluded to match hourly files).
+- name: views
+  type: bigint
+  nullable: false
+  description: Daily views.
+tests:
+  unique:
+  - - wiki_id
+    - day
+    - page_id
+    - access_method

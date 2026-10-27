@@ -1,0 +1,135 @@
+name: silver.page_change
+store: lake:silver
+owner_workstream: WS-transform
+grain: One row per distinct upstream event_id (deduplicated page change).
+primary_key:
+- event_id
+partitioning: event_date (date of event_dt)
+sort_order:
+- wiki_id
+- event_date
+- page_id
+freshness_sla: Hourly; event hours complete 15 minutes after hour end
+columns:
+- name: event_id
+  type: uuid
+  nullable: false
+  description: Upstream meta.id.
+- name: event_dt
+  type: timestamptz
+  nullable: false
+  description: Event time.
+- name: event_date
+  type: date
+  nullable: false
+  description: Partition column.
+- name: ingested_at
+  type: timestamptz
+  nullable: false
+  description: First ingest time.
+- name: wiki_id
+  type: varchar
+  nullable: false
+  description: Wiki database name, e.g. enwiki.
+- name: change_kind
+  type: varchar
+  nullable: false
+  description: Change kind.
+- name: page_id
+  type: bigint
+  nullable: false
+  description: Page ID.
+- name: page_title
+  type: varchar
+  nullable: false
+  description: Title after the change.
+- name: namespace_id
+  type: integer
+  nullable: false
+  description: Namespace.
+- name: is_redirect
+  type: boolean
+  nullable: false
+  description: Redirect flag after change.
+- name: wikibase_item_id
+  type: varchar
+  nullable: true
+  description: Wikidata item.
+- name: prior_page_title
+  type: varchar
+  nullable: true
+  description: Title before move.
+- name: prior_namespace_id
+  type: integer
+  nullable: true
+  description: Namespace before move.
+- name: rev_id
+  type: bigint
+  nullable: true
+  description: Revision ID.
+- name: rev_parent_id
+  type: bigint
+  nullable: true
+  description: Parent revision ID.
+- name: rev_dt
+  type: timestamptz
+  nullable: true
+  description: Revision time.
+- name: rev_size
+  type: bigint
+  nullable: true
+  description: Bytes.
+- name: is_minor_edit
+  type: boolean
+  nullable: true
+  description: Minor flag.
+- name: revert_method
+  type: varchar
+  nullable: true
+  description: rollback, undo, manual or null.
+- name: revert_original_rev_id
+  type: bigint
+  nullable: true
+  description: Reverted-to revision.
+- name: editor_type
+  type: varchar
+  nullable: false
+  description: Editor type.
+- name: editor_key
+  type: char(32)
+  nullable: true
+  description: Pseudonymous editor key.
+- name: duplicate_count
+  type: integer
+  nullable: false
+  description: Number of bronze copies collapsed into this row.
+tests:
+  not_null:
+  - event_id
+  - event_dt
+  - wiki_id
+  - page_id
+  - editor_type
+  unique:
+  - event_id
+  accepted_values:
+    change_kind:
+    - create
+    - edit
+    - move
+    - delete
+    - undelete
+    - visibility_change
+    editor_type:
+    - bot
+    - temp
+    - registered
+    - anonymous_ip
+    - system
+    revert_method:
+    - rollback
+    - undo
+    - manual
+  relationships:
+  - column: wiki_id
+    to: gold.dim_wiki.wiki_id

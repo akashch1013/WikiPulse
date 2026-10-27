@@ -1,0 +1,71 @@
+name: gold.fct_trending_hourly
+store: lake:gold
+owner_workstream: WS-transform
+grain: One row per (wiki_id, page_id, hour_utc) for candidate pages with views at or above the wiki's view floor; is_trending
+  marks detections.
+primary_key:
+- wiki_id
+- page_id
+- hour_utc
+partitioning: wiki_id, hour_date
+sort_order:
+- wiki_id
+- hour_utc
+- rank_in_wiki_hour
+freshness_sla: Within 4 hours of hour end
+columns:
+- name: wiki_id
+  type: varchar
+  nullable: false
+  description: Wiki database name, e.g. enwiki.
+- name: page_id
+  type: bigint
+  nullable: false
+  description: Page ID.
+- name: hour_utc
+  type: timestamptz
+  nullable: false
+  description: Hour start.
+- name: hour_date
+  type: date
+  nullable: false
+  description: Partition column.
+- name: views
+  type: bigint
+  nullable: false
+  description: Views this hour.
+- name: baseline_median
+  type: double
+  nullable: false
+  description: Median hourly views over trailing 168 h (missing hours = 0).
+- name: baseline_mad
+  type: double
+  nullable: false
+  description: Median absolute deviation over the same window.
+- name: robust_z
+  type: double
+  nullable: false
+  description: (views - median) / (1.4826 * MAD + 1).
+- name: ratio
+  type: double
+  nullable: false
+  description: views / (median + 1).
+- name: rank_in_wiki_hour
+  type: integer
+  nullable: false
+  description: Rank by robust_z within wiki and hour.
+- name: is_trending
+  type: boolean
+  nullable: false
+  description: robust_z >= threshold and views >= floor.
+- name: baseline_hours
+  type: smallint
+  nullable: false
+  description: Hours of history available (168 when complete).
+tests:
+  unique:
+  - - wiki_id
+    - page_id
+    - hour_utc
+  custom:
+  - baseline_hours = 168 for every row with is_trending.

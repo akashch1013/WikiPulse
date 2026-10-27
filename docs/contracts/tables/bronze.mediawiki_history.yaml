@@ -1,0 +1,102 @@
+name: bronze.mediawiki_history
+store: lake:bronze
+owner_workstream: WS-batch
+grain: One row per revision event line of a MediaWiki History TSV monthly file for enwiki/dewiki; page and user events are
+  filtered out at load.
+primary_key:
+- wiki_id
+- snapshot
+- revision_id
+partitioning: wiki_id, event_month
+sort_order:
+- wiki_id
+- event_month
+- page_id
+freshness_sla: Monthly snapshot loaded within 3 days of publication
+columns:
+- name: wiki_id
+  type: varchar
+  nullable: false
+  description: Wiki database name, e.g. enwiki.
+- name: snapshot
+  type: varchar
+  nullable: false
+  description: History snapshot, e.g. 2026-09.
+- name: event_month
+  type: date
+  nullable: false
+  description: First day of the event month.
+- name: event_timestamp
+  type: timestamptz
+  nullable: false
+  description: Revision timestamp.
+- name: revision_id
+  type: bigint
+  nullable: false
+  description: Revision ID.
+- name: revision_parent_id
+  type: bigint
+  nullable: true
+  description: Parent revision ID.
+- name: page_id
+  type: bigint
+  nullable: false
+  description: Page ID.
+- name: page_namespace
+  type: integer
+  nullable: false
+  description: Namespace at event time.
+- name: event_user_is_bot
+  type: boolean
+  nullable: false
+  description: Derived from event_user_is_bot_by (non-empty).
+- name: event_user_is_anonymous
+  type: boolean
+  nullable: false
+  description: Logged-out edit.
+- name: event_user_is_temporary
+  type: boolean
+  nullable: true
+  description: Temporary account flag, null where the snapshot predates the column.
+- name: event_user_key
+  type: char(32)
+  nullable: true
+  description: 'Editor key: HMAC-SHA256 of ''<wiki_id>:<user_id>'' (fallback user_text), first 16 bytes as hex; raw identity
+    is not stored.'
+- name: revision_is_identity_reverted
+  type: boolean
+  nullable: false
+  description: Later restored to an earlier identical revision.
+- name: revision_is_identity_revert
+  type: boolean
+  nullable: false
+  description: Restores an earlier identical revision.
+- name: revision_seconds_to_identity_revert
+  type: bigint
+  nullable: true
+  description: Seconds until reverted.
+- name: revision_text_bytes
+  type: bigint
+  nullable: true
+  description: Revision size.
+- name: source_file
+  type: varchar
+  nullable: false
+  description: Source file URL or Kafka topic/partition/offset range the row came from.
+- name: loaded_at
+  type: timestamptz
+  nullable: false
+  description: Time the row was written (UTC).
+- name: run_id
+  type: varchar
+  nullable: false
+  description: Orchestrator run or sink batch identifier.
+tests:
+  not_null:
+  - revision_id
+  - page_id
+  - event_timestamp
+  unique:
+  - - wiki_id
+    - snapshot
+    - revision_id

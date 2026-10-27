@@ -1,0 +1,34 @@
+name: gold.dim_hour
+store: lake:gold
+owner_workstream: WS-transform
+grain: One row per UTC hour in the covered range.
+primary_key:
+- hour_utc
+partitioning: none
+sort_order:
+- hour_utc
+freshness_sla: Daily
+columns:
+- name: hour_utc
+  type: timestamptz
+  nullable: false
+  description: Hour start.
+- name: date_utc
+  type: date
+  nullable: false
+  description: Date.
+- name: hour_of_day
+  type: smallint
+  nullable: false
+  description: 0-23.
+- name: day_of_week
+  type: smallint
+  nullable: false
+  description: ISO 1-7.
+- name: is_weekend
+  type: boolean
+  nullable: false
+  description: Saturday or Sunday.
+tests:
+  unique:
+  - hour_utc

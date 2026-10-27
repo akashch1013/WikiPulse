@@ -1,0 +1,646 @@
+openapi: 3.1.0
+info:
+  title: WikiPulse API
+  version: 0.1.0
+  summary: Read activity, pageview surges and edit bursts across Wikimedia wikis.
+  description: |
+    Hourly and per-minute activity for all public Wikimedia wikis, and page-level pageviews, trending pages,
+    edit bursts and their overlap for English and German Wikipedia.
+
+    Conventions:
+    - All timestamps are UTC, RFC 3339. `from` is inclusive, `to` is exclusive.
+    - Hourly endpoints accept at most 31 days per request; minute-grain requests at most 48 hours.
+    - List endpoints use keyset pagination. Pass `next_cursor` from a response as `cursor` to fetch the next page.
+      A cursor is only valid with the same filters that produced it.
+    - Every list response includes `freshness`, the latest complete period of the data it was built from.
+    - Pageview data is CC0 (Wikimedia Foundation). Page titles are from Wikimedia projects (CC BY-SA 4.0).
+    - Editor identities are not exposed. Editor counts are distinct counts of pseudonymous keys.
+  license:
+    name: MIT
+    identifier: MIT
+servers:
+  - url: http://localhost:8000
+    description: Local
+tags:
+  - name: Health
+    description: Service liveness, readiness and data freshness.
+  - name: Wikis
+    description: Activity per wiki across all public Wikimedia wikis.
+  - name: Detection
+    description: Pageview surges, edit bursts and their overlap on focus wikis.
+  - name: Pages
+    description: Page-level views, edits and title history.
+  - name: Evaluation
+    description: Measured quality of the detection methods.
+security: []
+paths:
+  /healthz:
+    get:
+      tags: [Health]
+      operationId: getHealth
+      summary: Liveness
+      description: Returns 200 while the process is running.
+      responses:
+        '200':
+          description: Process is running.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status]
+                properties:
+                  status: {type: string, const: ok}
+  /readyz:
+    get:
+      tags: [Health]
+      operationId: getReadiness
+      summary: Readiness
+      description: Returns 200 when the serving database is reachable, otherwise 503.
+      responses:
+        '200':
+          description: Ready.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Readiness'}
+        '503': {$ref: '#/components/responses/Unavailable'}
+  /v1/freshness:
+    get:
+      tags: [Health]
+      operationId: getFreshness
+      summary: Data freshness per dataset
+      responses:
+        '200':
+          description: Freshness of each dataset.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    type: array
+                    items: {$ref: '#/components/schemas/Freshness'}
+        '503': {$ref: '#/components/responses/Unavailable'}
+  /v1/wikis:
+    get:
+      tags: [Wikis]
+      operationId: listWikis
+      summary: List wikis
+      description: Wikis seen in the edit stream. `is_focus` marks wikis with page-level pageview coverage.
+      parameters:
+        - {$ref: '#/components/parameters/Limit'}
+        - {$ref: '#/components/parameters/Cursor'}
+        - name: is_focus
+          in: query
+          schema: {type: boolean}
+      responses:
+        '200':
+          description: Wikis.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Page'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items: {$ref: '#/components/schemas/Wiki'}
+        '400': {$ref: '#/components/responses/BadRequest'}
+        '422': {$ref: '#/components/responses/Unprocessable'}
+        '503': {$ref: '#/components/responses/Unavailable'}
+  /v1/wikis/{wiki_id}/activity:
+    get:
+      tags: [Wikis]
+      operationId: getWikiActivity
+      summary: Edit activity time series for a wiki
+      description: |
+        Counts of edits, creations, moves, deletions and reverts per time bucket and editor type.
+        Minute grain comes from the live stream and covers the last 7 days; values for the most recent
+        minutes can still change while late events arrive. Hour grain is the reconciled batch figure.
+      parameters:
+        - {$ref: '#/components/parameters/WikiIdPath'}
+        - {$ref: '#/components/parameters/From'}
+        - {$ref: '#/components/parameters/To'}
+        - name: grain
+          in: query
+          schema: {type: string, enum: [minute, hour], default: hour}
+        - {$ref: '#/components/parameters/EditorType'}
+        - {$ref: '#/components/parameters/Limit'}
+        - {$ref: '#/components/parameters/Cursor'}
+      responses:
+        '200':
+          description: Activity buckets ordered by bucket_start ascending.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Page'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items: {$ref: '#/components/schemas/ActivityBucket'}
+        '400': {$ref: '#/components/responses/BadRequest'}
+        '404': {$ref: '#/components/responses/NotFound'}
+        '422': {$ref: '#/components/responses/Unprocessable'}
+        '503': {$ref: '#/components/responses/Unavailable'}
+  /v1/wikis/{wiki_id}/editor-mix:
+    get:
+      tags: [Wikis]
+      operationId: getEditorMix
+      summary: Edits by editor type
+      description: Hourly edit counts and shares by editor type (bot, temporary account, registered, anonymous IP, system). Focus wikis only.
+      parameters:
+        - {$ref: '#/components/parameters/WikiIdPath'}
+        - {$ref: '#/components/parameters/From'}
+        - {$ref: '#/components/parameters/To'}
+        - {$ref: '#/components/parameters/Namespace'}
+        - {$ref: '#/components/parameters/Limit'}
+        - {$ref: '#/components/parameters/Cursor'}
+      responses:
+        '200':
+          description: Editor mix per hour, ordered by hour_utc ascending.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Page'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items: {$ref: '#/components/schemas/EditorMixRow'}
+        '400': {$ref: '#/components/responses/BadRequest'}
+        '404': {$ref: '#/components/responses/NotFound'}
+        '422': {$ref: '#/components/responses/Unprocessable'}
+        '503': {$ref: '#/components/responses/Unavailable'}
+  /v1/trending:
+    get:
+      tags: [Detection]
+      operationId: listTrending
+      summary: Pages with a pageview surge
+      description: |
+        Pages whose hourly views are far above their own trailing 7-day hourly baseline.
+        Score is a robust z-score: (views - median) / (1.4826 * MAD + 1) over the previous 168 hours.
+        Only pages above the wiki's minimum hourly views are scored. Ordered by hour_utc descending, then score descending.
+      parameters:
+        - {$ref: '#/components/parameters/WikiIdQuery'}
+        - {$ref: '#/components/parameters/From'}
+        - {$ref: '#/components/parameters/To'}
+        - {$ref: '#/components/parameters/Namespace'}
+        - name: only_flagged
+          in: query
+          description: When true, return only pages at or above the detection threshold.
+          schema: {type: boolean, default: true}
+        - {$ref: '#/components/parameters/Limit'}
+        - {$ref: '#/components/parameters/Cursor'}
+      responses:
+        '200':
+          description: Trending pages.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Page'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items: {$ref: '#/components/schemas/TrendingRow'}
+        '400': {$ref: '#/components/responses/BadRequest'}
+        '404': {$ref: '#/components/responses/NotFound'}
+        '422': {$ref: '#/components/responses/Unprocessable'}
+        '503': {$ref: '#/components/responses/Unavailable'}
+  /v1/edit-bursts:
+    get:
+      tags: [Detection]
+      operationId: listEditBursts
+      summary: Pages with an edit burst
+      description: |
+        Pages where non-bot edits in a 60-minute window are improbably high for that page:
+        Poisson tail probability below the threshold given the page's 28-day mean hourly edit rate,
+        with at least three distinct editors. Ordered by window_start descending.
+      parameters:
+        - {$ref: '#/components/parameters/WikiIdQuery'}
+        - {$ref: '#/components/parameters/From'}
+        - {$ref: '#/components/parameters/To'}
+        - {$ref: '#/components/parameters/Namespace'}
+        - {$ref: '#/components/parameters/Limit'}
+        - {$ref: '#/components/parameters/Cursor'}
+      responses:
+        '200':
+          description: Edit bursts.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Page'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items: {$ref: '#/components/schemas/EditBurstRow'}
+        '400': {$ref: '#/components/responses/BadRequest'}
+        '404': {$ref: '#/components/responses/NotFound'}
+        '422': {$ref: '#/components/responses/Unprocessable'}
+        '503': {$ref: '#/components/responses/Unavailable'}
+  /v1/overlap:
+    get:
+      tags: [Detection]
+      operationId: listReadEditOverlap
+      summary: Pages with both a read surge and an edit burst
+      description: Pages flagged as trending and as an edit burst within one hour of each other. `lead_minutes` is negative when editing started before the read surge.
+      parameters:
+        - {$ref: '#/components/parameters/WikiIdQuery'}
+        - {$ref: '#/components/parameters/From'}
+        - {$ref: '#/components/parameters/To'}
+        - {$ref: '#/components/parameters/Namespace'}
+        - {$ref: '#/components/parameters/Limit'}
+        - {$ref: '#/components/parameters/Cursor'}
+      responses:
+        '200':
+          description: Overlapping detections.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Page'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items: {$ref: '#/components/schemas/OverlapRow'}
+        '400': {$ref: '#/components/responses/BadRequest'}
+        '404': {$ref: '#/components/responses/NotFound'}
+        '422': {$ref: '#/components/responses/Unprocessable'}
+        '503': {$ref: '#/components/responses/Unavailable'}
+  /v1/pages/top-viewed:
+    get:
+      tags: [Pages]
+      operationId: listTopViewedPages
+      summary: Most viewed pages in an hour
+      parameters:
+        - {$ref: '#/components/parameters/WikiIdQuery'}
+        - name: hour
+          in: query
+          required: true
+          description: Hour start, UTC, on the hour.
+          schema: {type: string, format: date-time}
+          example: '2026-10-27T12:00:00Z'
+        - {$ref: '#/components/parameters/Namespace'}
+        - name: access_method
+          in: query
+          schema: {type: string, enum: [all, desktop, mobile-web], default: all}
+        - {$ref: '#/components/parameters/Limit'}
+        - {$ref: '#/components/parameters/Cursor'}
+      responses:
+        '200':
+          description: Pages ordered by views descending.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Page'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items: {$ref: '#/components/schemas/TopViewedRow'}
+        '400': {$ref: '#/components/responses/BadRequest'}
+        '404': {$ref: '#/components/responses/NotFound'}
+        '422': {$ref: '#/components/responses/Unprocessable'}
+        '503': {$ref: '#/components/responses/Unavailable'}
+  /v1/pages/{wiki_id}/{page_id}:
+    get:
+      tags: [Pages]
+      operationId: getPage
+      summary: Page details and title history
+      description: Current state of a page and every title, namespace and redirect version it has had in the covered period. Pages are identified by page ID, which does not change on rename.
+      parameters:
+        - {$ref: '#/components/parameters/WikiIdPath'}
+        - {$ref: '#/components/parameters/PageIdPath'}
+      responses:
+        '200':
+          description: Page.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/PageDetail'}
+        '400': {$ref: '#/components/responses/BadRequest'}
+        '404': {$ref: '#/components/responses/NotFound'}
+        '503': {$ref: '#/components/responses/Unavailable'}
+  /v1/pages/{wiki_id}/{page_id}/activity:
+    get:
+      tags: [Pages]
+      operationId: getPageActivity
+      summary: Hourly views and edits for a page
+      description: Hours with no views above the activity floor and no edits are omitted.
+      parameters:
+        - {$ref: '#/components/parameters/WikiIdPath'}
+        - {$ref: '#/components/parameters/PageIdPath'}
+        - {$ref: '#/components/parameters/From'}
+        - {$ref: '#/components/parameters/To'}
+        - {$ref: '#/components/parameters/Limit'}
+        - {$ref: '#/components/parameters/Cursor'}
+      responses:
+        '200':
+          description: Hourly activity ordered by hour_utc ascending.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Page'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items: {$ref: '#/components/schemas/PageActivityRow'}
+        '400': {$ref: '#/components/responses/BadRequest'}
+        '404': {$ref: '#/components/responses/NotFound'}
+        '422': {$ref: '#/components/responses/Unprocessable'}
+        '503': {$ref: '#/components/responses/Unavailable'}
+  /v1/evaluation:
+    get:
+      tags: [Evaluation]
+      operationId: getEvaluation
+      summary: Detection quality
+      description: |
+        Precision and recall of each detection method against labelled pages (articles linked from
+        English Wikipedia's Portal:Current events, and from the Main Page) over the evaluation window,
+        compared with simple baselines.
+      parameters:
+        - name: wiki_id
+          in: query
+          schema: {$ref: '#/components/schemas/WikiId'}
+      responses:
+        '200':
+          description: Evaluation summary.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    type: array
+                    items: {$ref: '#/components/schemas/EvaluationRow'}
+        '400': {$ref: '#/components/responses/BadRequest'}
+        '503': {$ref: '#/components/responses/Unavailable'}
+components:
+  parameters:
+    WikiIdPath:
+      name: wiki_id
+      in: path
+      required: true
+      schema: {$ref: '#/components/schemas/WikiId'}
+    WikiIdQuery:
+      name: wiki_id
+      in: query
+      required: true
+      description: Focus wiki (enwiki or dewiki).
+      schema: {$ref: '#/components/schemas/WikiId'}
+    PageIdPath:
+      name: page_id
+      in: path
+      required: true
+      schema: {type: integer, format: int64, minimum: 1}
+    From:
+      name: from
+      in: query
+      description: Start of the range, inclusive (UTC). Defaults to 24 hours before `to`.
+      schema: {type: string, format: date-time}
+    To:
+      name: to
+      in: query
+      description: End of the range, exclusive (UTC). Defaults to the latest complete period.
+      schema: {type: string, format: date-time}
+    Namespace:
+      name: namespace
+      in: query
+      description: MediaWiki namespace number. 0 is the article namespace.
+      schema: {type: integer}
+    EditorType:
+      name: editor_type
+      in: query
+      schema: {$ref: '#/components/schemas/EditorType'}
+    Limit:
+      name: limit
+      in: query
+      schema: {type: integer, minimum: 1, maximum: 500, default: 50}
+    Cursor:
+      name: cursor
+      in: query
+      description: Opaque value from a previous response's `next_cursor`.
+      schema: {type: string, maxLength: 512}
+  responses:
+    BadRequest:
+      description: Malformed parameter or invalid cursor.
+      content:
+        application/problem+json:
+          schema: {$ref: '#/components/schemas/Problem'}
+    NotFound:
+      description: Wiki or page not found.
+      content:
+        application/problem+json:
+          schema: {$ref: '#/components/schemas/Problem'}
+    Unprocessable:
+      description: Parameters are well-formed but not allowed together, e.g. a time range longer than the maximum or `from` after `to`.
+      content:
+        application/problem+json:
+          schema: {$ref: '#/components/schemas/Problem'}
+    Unavailable:
+      description: The serving database is unavailable.
+      content:
+        application/problem+json:
+          schema: {$ref: '#/components/schemas/Problem'}
+  schemas:
+    WikiId:
+      type: string
+      pattern: '^[a-z0-9_]+$'
+      examples: [enwiki]
+    EditorType:
+      type: string
+      enum: [bot, temp, registered, anonymous_ip, system]
+    Problem:
+      type: object
+      description: RFC 9457 problem details.
+      required: [type, title, status]
+      properties:
+        type: {type: string, format: uri-reference}
+        title: {type: string}
+        status: {type: integer}
+        detail: {type: string}
+        instance: {type: string}
+    Freshness:
+      type: object
+      required: [source, last_complete_hour, lag_seconds]
+      properties:
+        source:
+          type: string
+          enum: [stream, pageviews_hourly, page_snapshot, mediawiki_history, marts]
+        last_complete_hour:
+          type: [string, 'null']
+          format: date-time
+        lag_seconds:
+          type: [integer, 'null']
+    Readiness:
+      type: object
+      required: [status]
+      properties:
+        status: {type: string, const: ready}
+    Page:
+      type: object
+      required: [data, next_cursor, freshness]
+      properties:
+        data:
+          type: array
+          items: {}
+        next_cursor:
+          type: [string, 'null']
+        freshness: {$ref: '#/components/schemas/Freshness'}
+    Wiki:
+      type: object
+      required: [wiki_id, domain, project, is_focus]
+      properties:
+        wiki_id: {$ref: '#/components/schemas/WikiId'}
+        domain: {type: string, examples: [en.wikipedia.org]}
+        project: {type: string, examples: [wikipedia]}
+        language_code: {type: [string, 'null']}
+        is_focus: {type: boolean}
+    ActivityBucket:
+      type: object
+      required: [bucket_start, editor_type, edits, creates, moves, deletes, reverts, distinct_pages, distinct_editors, is_final]
+      properties:
+        bucket_start: {type: string, format: date-time}
+        editor_type: {$ref: '#/components/schemas/EditorType'}
+        edits: {type: integer}
+        creates: {type: integer}
+        moves: {type: integer}
+        deletes: {type: integer}
+        reverts: {type: integer}
+        distinct_pages: {type: integer}
+        distinct_editors: {type: integer}
+        is_final:
+          type: boolean
+          description: False while the bucket can still change (minute grain within the late-data grace period, or hour not yet reconciled).
+    EditorMixRow:
+      type: object
+      required: [hour_utc, editor_type, edits, share_of_edits, reverts, distinct_editors]
+      properties:
+        hour_utc: {type: string, format: date-time}
+        editor_type: {$ref: '#/components/schemas/EditorType'}
+        edits: {type: integer}
+        share_of_edits: {type: number, minimum: 0, maximum: 1}
+        reverts: {type: integer}
+        distinct_editors: {type: integer}
+    PageRef:
+      type: object
+      required: [wiki_id, page_id, title, namespace]
+      properties:
+        wiki_id: {$ref: '#/components/schemas/WikiId'}
+        page_id: {type: integer, format: int64}
+        title: {type: string, description: 'Title at the time of the row, underscores for spaces.'}
+        namespace: {type: integer}
+    TrendingRow:
+      allOf:
+        - $ref: '#/components/schemas/PageRef'
+        - type: object
+          required: [hour_utc, views, baseline_median, baseline_mad, score, ratio, rank, is_trending]
+          properties:
+            hour_utc: {type: string, format: date-time}
+            views: {type: integer, description: 'Views in the hour, desktop and mobile web.'}
+            baseline_median: {type: number, description: Median hourly views over the previous 168 hours.}
+            baseline_mad: {type: number}
+            score: {type: number, description: Robust z-score.}
+            ratio: {type: number, description: views / (baseline_median + 1).}
+            rank: {type: integer, description: Rank by score within the wiki and hour.}
+            is_trending: {type: boolean}
+    EditBurstRow:
+      allOf:
+        - $ref: '#/components/schemas/PageRef'
+        - type: object
+          required: [window_start, window_end, edits, distinct_editors, baseline_rate_per_hour, poisson_p, reverts]
+          properties:
+            window_start: {type: string, format: date-time}
+            window_end: {type: string, format: date-time}
+            edits: {type: integer, description: Non-bot edits in the window.}
+            distinct_editors: {type: integer}
+            baseline_rate_per_hour: {type: number}
+            poisson_p: {type: number, minimum: 0, maximum: 1}
+            reverts: {type: integer}
+    OverlapRow:
+      allOf:
+        - $ref: '#/components/schemas/PageRef'
+        - type: object
+          required: [trending_hour, burst_window_start, lead_minutes, views, score, burst_edits]
+          properties:
+            trending_hour: {type: string, format: date-time}
+            burst_window_start: {type: string, format: date-time}
+            lead_minutes: {type: integer}
+            views: {type: integer}
+            score: {type: number}
+            burst_edits: {type: integer}
+    TopViewedRow:
+      allOf:
+        - $ref: '#/components/schemas/PageRef'
+        - type: object
+          required: [hour_utc, views, desktop_views, mobile_web_views]
+          properties:
+            hour_utc: {type: string, format: date-time}
+            views: {type: integer}
+            desktop_views: {type: integer}
+            mobile_web_views: {type: integer}
+    TitleVersion:
+      type: object
+      required: [title, namespace, is_redirect, valid_from, valid_to, is_deleted]
+      properties:
+        title: {type: string}
+        namespace: {type: integer}
+        is_redirect: {type: boolean}
+        valid_from: {type: string, format: date-time}
+        valid_to: {type: [string, 'null'], format: date-time}
+        is_deleted: {type: boolean}
+    PageDetail:
+      allOf:
+        - $ref: '#/components/schemas/PageRef'
+        - type: object
+          required: [is_redirect, is_deleted, title_history]
+          properties:
+            is_redirect: {type: boolean}
+            is_deleted: {type: boolean}
+            wikibase_item_id: {type: [string, 'null']}
+            instance_of: {type: [string, 'null'], description: Wikidata "instance of" label for the page's item.}
+            categories:
+              type: array
+              items: {type: string}
+            title_history:
+              type: array
+              items: {$ref: '#/components/schemas/TitleVersion'}
+    PageActivityRow:
+      type: object
+      required: [hour_utc, views, desktop_views, mobile_web_views, edits, human_edits, reverts, distinct_editors]
+      properties:
+        hour_utc: {type: string, format: date-time}
+        views: {type: integer}
+        desktop_views: {type: integer}
+        mobile_web_views: {type: integer}
+        edits: {type: integer}
+        human_edits: {type: integer}
+        reverts: {type: integer}
+        distinct_editors: {type: integer}
+    EvaluationRow:
+      type: object
+      required: [method, label_set, wiki_id, window_start, window_end, days, mean_precision_at_20, mean_recall]
+      properties:
+        method:
+          type: string
+          enum: [trending_robust_z, baseline_raw_views, baseline_dod_ratio, edit_burst_poisson, baseline_raw_edits]
+        label_set:
+          type: string
+          enum: [current_events, main_page]
+        wiki_id: {$ref: '#/components/schemas/WikiId'}
+        window_start: {type: string, format: date}
+        window_end: {type: string, format: date}
+        days: {type: integer}
+        mean_precision_at_20: {type: number}
+        mean_recall: {type: [number, 'null']}

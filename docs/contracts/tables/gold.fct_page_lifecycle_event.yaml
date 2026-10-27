@@ -1,0 +1,66 @@
+name: gold.fct_page_lifecycle_event
+store: lake:gold
+owner_workstream: WS-transform
+grain: One row per page create, move, delete or undelete event (event_id).
+primary_key:
+- event_id
+partitioning: event_date
+sort_order:
+- wiki_id
+- page_id
+- event_dt
+freshness_sla: Hourly
+columns:
+- name: event_id
+  type: uuid
+  nullable: false
+  description: Upstream meta.id.
+- name: wiki_id
+  type: varchar
+  nullable: false
+  description: Wiki database name, e.g. enwiki.
+- name: page_id
+  type: bigint
+  nullable: false
+  description: Page ID.
+- name: event_dt
+  type: timestamptz
+  nullable: false
+  description: Event time.
+- name: event_date
+  type: date
+  nullable: false
+  description: Partition column.
+- name: change_kind
+  type: varchar
+  nullable: false
+  description: create, move, delete, undelete.
+- name: title_before
+  type: varchar
+  nullable: true
+  description: Title before.
+- name: title_after
+  type: varchar
+  nullable: true
+  description: Title after.
+- name: namespace_before
+  type: integer
+  nullable: true
+  description: Namespace before.
+- name: namespace_after
+  type: integer
+  nullable: true
+  description: Namespace after.
+- name: editor_type
+  type: varchar
+  nullable: false
+  description: Editor type.
+tests:
+  unique:
+  - event_id
+  accepted_values:
+    change_kind:
+    - create
+    - move
+    - delete
+    - undelete

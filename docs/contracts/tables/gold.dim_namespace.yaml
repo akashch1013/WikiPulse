@@ -1,0 +1,37 @@
+name: gold.dim_namespace
+store: lake:gold
+owner_workstream: WS-transform
+grain: One row per (wiki_id, namespace_id) for focus wikis.
+primary_key:
+- wiki_id
+- namespace_id
+partitioning: none
+sort_order:
+- wiki_id
+- namespace_id
+freshness_sla: Monthly
+columns:
+- name: wiki_id
+  type: varchar
+  nullable: false
+  description: Wiki database name, e.g. enwiki.
+- name: namespace_id
+  type: integer
+  nullable: false
+  description: Namespace number.
+- name: canonical_name
+  type: varchar
+  nullable: false
+  description: Canonical English name, '' for main.
+- name: local_name
+  type: varchar
+  nullable: false
+  description: Localised prefix.
+- name: is_content
+  type: boolean
+  nullable: false
+  description: Content namespace.
+tests:
+  unique:
+  - - wiki_id
+    - namespace_id

@@ -1,0 +1,1159 @@
+{
+  "project": "WikiPulse",
+  "updated": "2026-10-28",
+  "status_values": [
+    "todo",
+    "in_progress",
+    "review",
+    "done",
+    "blocked"
+  ],
+  "milestones": [
+    {
+      "id": "M0",
+      "title": "Foundations and frozen contracts",
+      "core": true,
+      "definition_of_done": "make up-base && make ps-healthy && make db-rollback-check && uv run pytest -q, with the CI contract job green and M0-08 marked done"
+    },
+    {
+      "id": "M1",
+      "title": "Thin end-to-end slice (dewiki, live stream, one real pageview hour)",
+      "core": true,
+      "definition_of_done": "make up && make slice-check"
+    },
+    {
+      "id": "M2",
+      "title": "Batch depth: backfill, XML at scale, history, page identity, data quality",
+      "core": true,
+      "definition_of_done": "make backfill PROFILE=quick && make dbt-build && make dbt-test, with every gold.dq_reconciliation row passed"
+    },
+    {
+      "id": "M3",
+      "title": "Stream depth: resume, late data, schema drift, reconciliation",
+      "core": true,
+      "definition_of_done": "uv run pytest services/ingest services/stream_processor && make chaos-check"
+    },
+    {
+      "id": "M4",
+      "title": "Analytics and evaluation",
+      "core": true,
+      "definition_of_done": "make backfill PROFILE=full && make dbt-build && make evaluate, with results recorded in data-model.md"
+    },
+    {
+      "id": "M5",
+      "title": "Serving: API, Postman, dashboards",
+      "core": true,
+      "definition_of_done": "make up && make newman && make dash-check"
+    },
+    {
+      "id": "M6",
+      "title": "Azure deployment",
+      "core": true,
+      "definition_of_done": "make azure-up && make azure-smoke && make azure-down"
+    },
+    {
+      "id": "M7",
+      "title": "Documentation with measured results",
+      "core": true,
+      "definition_of_done": "every number in README.md and docs/ traces to a recorded run (M7-01, M7-02 done checks)"
+    },
+    {
+      "id": "O1",
+      "title": "Optional: API Management gateway",
+      "core": false,
+      "definition_of_done": "O1-01 done check"
+    },
+    {
+      "id": "O2",
+      "title": "Optional: Lift Wing topic enrichment",
+      "core": false,
+      "definition_of_done": "O2-01 done check"
+    },
+    {
+      "id": "O3",
+      "title": "Optional: dewiki evaluation labels",
+      "core": false,
+      "definition_of_done": "O3-01 done check"
+    },
+    {
+      "id": "O4",
+      "title": "Optional: Dagster UI on Azure",
+      "core": false,
+      "definition_of_done": "O4-01 done check"
+    }
+  ],
+  "workstreams": [
+    {
+      "id": "WS-lead",
+      "owner_dirs": [
+        "docs/",
+        "config/",
+        "planning/",
+        "tests/e2e/",
+        "compose.yaml",
+        "Makefile",
+        "pyproject.toml",
+        "uv.lock",
+        ".env.example",
+        ".gitignore",
+        "orchestration/src/wikipulse_orchestration/definitions.py"
+      ]
+    },
+    {
+      "id": "WS-common",
+      "owner_dirs": [
+        "libs/common/"
+      ]
+    },
+    {
+      "id": "WS-db",
+      "owner_dirs": [
+        "migrations/"
+      ]
+    },
+    {
+      "id": "WS-ingest",
+      "owner_dirs": [
+        "services/ingest/",
+        "tests/fixtures/page_change/"
+      ]
+    },
+    {
+      "id": "WS-stream",
+      "owner_dirs": [
+        "services/stream_processor/"
+      ]
+    },
+    {
+      "id": "WS-batch",
+      "owner_dirs": [
+        "orchestration/ (except definitions.py)",
+        "tests/fixtures/pageviews/",
+        "tests/fixtures/xml/",
+        "tests/fixtures/history/",
+        "tests/fixtures/pageview_complete/"
+      ]
+    },
+    {
+      "id": "WS-transform",
+      "owner_dirs": [
+        "transform/"
+      ]
+    },
+    {
+      "id": "WS-serving",
+      "owner_dirs": [
+        "services/api/"
+      ]
+    },
+    {
+      "id": "WS-dash",
+      "owner_dirs": [
+        "dashboards/"
+      ]
+    },
+    {
+      "id": "WS-infra",
+      "owner_dirs": [
+        "infra/",
+        ".github/workflows/",
+        "deploy/"
+      ]
+    }
+  ],
+  "tasks": [
+    {
+      "id": "M0-01",
+      "milestone": "M0",
+      "workstream": "WS-lead",
+      "core": true,
+      "title": "uv workspace root, Makefile, .gitignore, .env.example, config/wikipulse.toml with every section (http, wikis, stream, windows, batch, lake, detection, api, telemetry)",
+      "owner_dirs": [
+        "docs/",
+        "config/",
+        "planning/",
+        "tests/e2e/",
+        "compose.yaml",
+        "Makefile",
+        "pyproject.toml",
+        "uv.lock",
+        ".env.example",
+        ".gitignore",
+        "orchestration/src/wikipulse_orchestration/definitions.py"
+      ],
+      "depends_on": [],
+      "status": "todo",
+      "done_check": "uv sync --frozen && make help exits 0, and config/wikipulse.toml parses with python3 -c \"import tomllib; tomllib.load(open('config/wikipulse.toml','rb'))\""
+    },
+    {
+      "id": "M0-02",
+      "milestone": "M0",
+      "workstream": "WS-common",
+      "core": true,
+      "title": "Common library: config loader with env overrides, JSON logging, HTTP client (User-Agent, per-host token bucket, Retry-After, backoff, maxlag), Kafka client config for local and Event Hubs profiles, OpenTelemetry setup, data-root mount guard",
+      "owner_dirs": [
+        "libs/common/"
+      ],
+      "depends_on": [
+        "M0-01"
+      ],
+      "status": "todo",
+      "done_check": "uv run pytest libs/common -q passes, including tests against a local HTTP server that returns 429 with Retry-After and 503 maxlag, and a guard test on an unmounted path"
+    },
+    {
+      "id": "M0-03",
+      "milestone": "M0",
+      "workstream": "WS-db",
+      "core": true,
+      "title": "dbmate migrations for schemas ops, stream, enrich, mart, the read-only role, and every postgres table contract",
+      "owner_dirs": [
+        "migrations/"
+      ],
+      "depends_on": [
+        "M0-01",
+        "M0-08"
+      ],
+      "status": "todo",
+      "done_check": "make db-migrate && make db-rollback-check (up, down, up) exits 0 and make contracts-check-db reports no column differences against docs/contracts/tables/postgres tables"
+    },
+    {
+      "id": "M0-04",
+      "milestone": "M0",
+      "workstream": "WS-lead",
+      "core": true,
+      "title": "compose.yaml base: kafka 4.4.0 KRaft, postgres 18, prometheus, grafana; memory limits; SSD named volumes; HDD bind mount from WIKIPULSE_DATA_ROOT; healthchecks",
+      "owner_dirs": [
+        "docs/",
+        "config/",
+        "planning/",
+        "tests/e2e/",
+        "compose.yaml",
+        "Makefile",
+        "pyproject.toml",
+        "uv.lock",
+        ".env.example",
+        ".gitignore",
+        "orchestration/src/wikipulse_orchestration/definitions.py"
+      ],
+      "depends_on": [
+        "M0-01"
+      ],
+      "status": "todo",
+      "done_check": "make up-base && make ps-healthy reports every container healthy; docker stats --no-stream shows each container under its limit"
+    },
+    {
+      "id": "M0-05",
+      "milestone": "M0",
+      "workstream": "WS-ingest",
+      "core": true,
+      "title": "Capture real fixtures: 2,000 page_change events with SSE ids (identity fields replaced by placeholder strings before saving) plus SOURCE.json (url, captured_at, transformation)",
+      "owner_dirs": [
+        "services/ingest/",
+        "tests/fixtures/page_change/"
+      ],
+      "depends_on": [
+        "M0-01"
+      ],
+      "status": "todo",
+      "done_check": "test -s tests/fixtures/page_change/events.jsonl && uv run pytest services/ingest -k fixtures validates every fixture against the vendored upstream schema"
+    },
+    {
+      "id": "M0-06",
+      "milestone": "M0",
+      "workstream": "WS-batch",
+      "core": true,
+      "title": "Capture real fixtures: contiguous en, en.m, de, de.m slices of one pageview hour (50k lines total), one dewiki stub-meta-current slice cut at a page boundary, 10k History TSV lines (names and IPs replaced), 5k pageview_complete lines; each with SOURCE.json",
+      "owner_dirs": [
+        "orchestration/ (except definitions.py)",
+        "tests/fixtures/pageviews/",
+        "tests/fixtures/xml/",
+        "tests/fixtures/history/",
+        "tests/fixtures/pageview_complete/"
+      ],
+      "depends_on": [
+        "M0-01"
+      ],
+      "status": "todo",
+      "done_check": "uv run pytest orchestration -k fixtures parses every fixture with zero malformed lines and checks SOURCE.json fields"
+    },
+    {
+      "id": "M0-07",
+      "milestone": "M0",
+      "workstream": "WS-infra",
+      "core": true,
+      "title": "CI workflow: ruff, pytest per workspace member, JSON Schema and table-contract validation, OpenAPI lint",
+      "owner_dirs": [
+        "infra/",
+        ".github/workflows/",
+        "deploy/"
+      ],
+      "depends_on": [
+        "M0-01"
+      ],
+      "status": "todo",
+      "done_check": "act -j ci (or a pushed branch) runs green; the contract job fails when a table YAML is made invalid"
+    },
+    {
+      "id": "M0-08",
+      "milestone": "M0",
+      "workstream": "WS-lead",
+      "core": true,
+      "title": "Freeze contracts: review event schemas, table contracts, OpenAPI and config layout; mark frozen",
+      "owner_dirs": [
+        "docs/",
+        "config/",
+        "planning/",
+        "tests/e2e/",
+        "compose.yaml",
+        "Makefile",
+        "pyproject.toml",
+        "uv.lock",
+        ".env.example",
+        ".gitignore",
+        "orchestration/src/wikipulse_orchestration/definitions.py"
+      ],
+      "depends_on": [],
+      "status": "todo",
+      "done_check": "docs/contracts validated by the M0-07 contract job; status of this task is done before any M1 task starts"
+    },
+    {
+      "id": "M1-01",
+      "milestone": "M1",
+      "workstream": "WS-ingest",
+      "core": true,
+      "title": "Ingest service: SSE client, Last-Event-ID checkpoint after flush, canary drop, schema validation with drift handling, pseudonymisation, produce with key wiki_id:page_id, DLQ, metrics, Dockerfile",
+      "owner_dirs": [
+        "services/ingest/",
+        "tests/fixtures/page_change/"
+      ],
+      "depends_on": [
+        "M0-02",
+        "M0-03",
+        "M0-05",
+        "M0-08"
+      ],
+      "status": "todo",
+      "done_check": "uv run pytest services/ingest passes; after make up and 2 minutes, make check-ingest shows >1,000 messages on wikipulse.page_change.v1 and an ops.stream_checkpoint updated within 10 s"
+    },
+    {
+      "id": "M1-02",
+      "milestone": "M1",
+      "workstream": "WS-stream",
+      "core": true,
+      "title": "Stream processor: dedup state, bronze sink to DuckLake with offset ranges, 1-minute per-wiki x editor_type windows upserted to stream.wiki_activity_minute",
+      "owner_dirs": [
+        "services/stream_processor/"
+      ],
+      "depends_on": [
+        "M0-02",
+        "M0-03",
+        "M0-08"
+      ],
+      "status": "todo",
+      "done_check": "uv run pytest services/stream_processor passes (fixture replay with injected duplicates yields unique bronze event_ids); after make up, stream.wiki_activity_minute has rows for the last 3 closed minutes"
+    },
+    {
+      "id": "M1-03",
+      "milestone": "M1",
+      "workstream": "WS-batch",
+      "core": true,
+      "title": "Assets: pageviews_hourly (single partition, manifest, raw retention, bronze) and page_snapshot_xml (dewiki, md5 verified), Dagster definitions",
+      "owner_dirs": [
+        "orchestration/ (except definitions.py)",
+        "tests/fixtures/pageviews/",
+        "tests/fixtures/xml/",
+        "tests/fixtures/history/",
+        "tests/fixtures/pageview_complete/"
+      ],
+      "depends_on": [
+        "M0-02",
+        "M0-03",
+        "M0-06",
+        "M0-08"
+      ],
+      "status": "todo",
+      "done_check": "make materialize ASSET=pageviews_hourly PARTITION=<recent hour> and ASSET=page_snapshot_xml PARTITION=dewiki/<run> leave manifest rows status=loaded with row counts; rerunning either leaves row counts unchanged"
+    },
+    {
+      "id": "M1-04",
+      "milestone": "M1",
+      "workstream": "WS-transform",
+      "core": true,
+      "title": "dbt project on DuckLake: sources, silver.page_change, silver.page_snapshot, silver.page_versions (snapshot only), silver.pageviews_hourly with title resolution, dim_wiki, dim_page, fct_pageviews_hourly, fct_wiki_activity_hourly, tests",
+      "owner_dirs": [
+        "transform/"
+      ],
+      "depends_on": [
+        "M0-06",
+        "M0-08"
+      ],
+      "status": "todo",
+      "done_check": "make dbt-build-fixtures passes in CI; on live data make dbt-build passes and reports the resolved-views share for the loaded dewiki hour"
+    },
+    {
+      "id": "M1-05",
+      "milestone": "M1",
+      "workstream": "WS-batch",
+      "core": true,
+      "title": "publish_serving asset for mart.wiki_activity_hourly, mart.page_activity_hourly, mart.page_current",
+      "owner_dirs": [
+        "orchestration/ (except definitions.py)",
+        "tests/fixtures/pageviews/",
+        "tests/fixtures/xml/",
+        "tests/fixtures/history/",
+        "tests/fixtures/pageview_complete/"
+      ],
+      "depends_on": [
+        "M1-03",
+        "M1-04",
+        "M0-03"
+      ],
+      "status": "todo",
+      "done_check": "make materialize ASSET=publish_serving leaves row counts in mart tables equal to the gold partitions; rerun is a no-op"
+    },
+    {
+      "id": "M1-06",
+      "milestone": "M1",
+      "workstream": "WS-serving",
+      "core": true,
+      "title": "API: /healthz, /readyz, /v1/freshness, /v1/wikis, /v1/wikis/{wiki_id}/activity, /v1/pages/top-viewed per openapi.yaml, connection pool, read-only role",
+      "owner_dirs": [
+        "services/api/"
+      ],
+      "depends_on": [
+        "M0-02",
+        "M0-03",
+        "M0-08"
+      ],
+      "status": "todo",
+      "done_check": "uv run pytest services/api passes against a migrated Postgres loaded from fixtures; responses validate against docs/contracts/openapi.yaml"
+    },
+    {
+      "id": "M1-07",
+      "milestone": "M1",
+      "workstream": "WS-dash",
+      "core": true,
+      "title": "Grafana provisioning: Postgres datasource (read-only), analyst dashboard v1 (per-minute wiki activity, top viewed pages per hour, freshness)",
+      "owner_dirs": [
+        "dashboards/"
+      ],
+      "depends_on": [
+        "M0-03",
+        "M0-04"
+      ],
+      "status": "todo",
+      "done_check": "make up then make dash-check queries every panel through the Grafana /api/ds/query endpoint with zero errors"
+    },
+    {
+      "id": "M1-08",
+      "milestone": "M1",
+      "workstream": "WS-lead",
+      "core": true,
+      "title": "End-to-end slice check: live events and one real dewiki pageview hour through every layer to API and dashboard",
+      "owner_dirs": [
+        "docs/",
+        "config/",
+        "planning/",
+        "tests/e2e/",
+        "compose.yaml",
+        "Makefile",
+        "pyproject.toml",
+        "uv.lock",
+        ".env.example",
+        ".gitignore",
+        "orchestration/src/wikipulse_orchestration/definitions.py"
+      ],
+      "depends_on": [
+        "M1-01",
+        "M1-02",
+        "M1-03",
+        "M1-04",
+        "M1-05",
+        "M1-06",
+        "M1-07"
+      ],
+      "status": "todo",
+      "done_check": "make up && make slice-check asserts non-zero rows in bronze, silver, gold, stream and mart tables, non-empty API responses for dewiki, and freshness lag under 5 min for the stream"
+    },
+    {
+      "id": "M2-01",
+      "milestone": "M2",
+      "workstream": "WS-batch",
+      "core": true,
+      "title": "Pageviews backfill and incremental modes, republication sweep, 3-connection limit, raw retention, en and de",
+      "owner_dirs": [
+        "orchestration/ (except definitions.py)",
+        "tests/fixtures/pageviews/",
+        "tests/fixtures/xml/",
+        "tests/fixtures/history/",
+        "tests/fixtures/pageview_complete/"
+      ],
+      "depends_on": [
+        "M1-08"
+      ],
+      "status": "todo",
+      "done_check": "make backfill PROFILE=quick loads 192 hours; a second run downloads nothing; editing one manifest row's size and running the sweep reloads exactly that hour"
+    },
+    {
+      "id": "M2-02",
+      "milestone": "M2",
+      "workstream": "WS-batch",
+      "core": true,
+      "title": "stub-meta-current for enwiki (27 parts) and dewiki, multi-part manifest, peak RSS measured",
+      "owner_dirs": [
+        "orchestration/ (except definitions.py)",
+        "tests/fixtures/pageviews/",
+        "tests/fixtures/xml/",
+        "tests/fixtures/history/",
+        "tests/fixtures/pageview_complete/"
+      ],
+      "depends_on": [
+        "M1-08"
+      ],
+      "status": "todo",
+      "done_check": "all parts status=loaded with md5 match; asset_peak_rss_bytes for the enwiki run under 400 MB"
+    },
+    {
+      "id": "M2-03",
+      "milestone": "M2",
+      "workstream": "WS-batch",
+      "core": true,
+      "title": "MediaWiki History TSV loader (3 months, en and de), column-count check, pseudonymisation while parsing",
+      "owner_dirs": [
+        "orchestration/ (except definitions.py)",
+        "tests/fixtures/pageviews/",
+        "tests/fixtures/xml/",
+        "tests/fixtures/history/",
+        "tests/fixtures/pageview_complete/"
+      ],
+      "depends_on": [
+        "M1-08"
+      ],
+      "status": "todo",
+      "done_check": "manifest rows loaded for 6 wiki-months; bronze.mediawiki_history has no column holding user text or IP (contract test)"
+    },
+    {
+      "id": "M2-04",
+      "milestone": "M2",
+      "workstream": "WS-batch",
+      "core": true,
+      "title": "pageview_complete reconciliation loader (one day per week)",
+      "owner_dirs": [
+        "orchestration/ (except definitions.py)",
+        "tests/fixtures/pageviews/",
+        "tests/fixtures/xml/",
+        "tests/fixtures/history/",
+        "tests/fixtures/pageview_complete/"
+      ],
+      "depends_on": [
+        "M1-08"
+      ],
+      "status": "todo",
+      "done_check": "manifest rows loaded for the configured days"
+    },
+    {
+      "id": "M2-05",
+      "milestone": "M2",
+      "workstream": "WS-transform",
+      "core": true,
+      "title": "SCD2 silver.page_versions from snapshots and stream lifecycle events, fct_page_lifecycle_event, fct_revision, redirect attribution, pageviews_unresolved with retry window",
+      "owner_dirs": [
+        "transform/"
+      ],
+      "depends_on": [
+        "M1-08"
+      ],
+      "status": "todo",
+      "done_check": "make dbt-build passes; a fixture page renamed by a stream move event resolves old-title hours to the old version and new-title hours to the new version (dbt unit test)"
+    },
+    {
+      "id": "M2-06",
+      "milestone": "M2",
+      "workstream": "WS-transform",
+      "core": true,
+      "title": "Data-quality tests: uniqueness, relationships, accepted values, freshness, volume, reconciliation against pageview_complete, snapshot vs stream state",
+      "owner_dirs": [
+        "transform/"
+      ],
+      "depends_on": [
+        "M2-04",
+        "M2-05"
+      ],
+      "status": "todo",
+      "done_check": "make dbt-test passes on live data; gold.dq_reconciliation has a row for every check and period with passed recorded"
+    },
+    {
+      "id": "M2-07",
+      "milestone": "M2",
+      "workstream": "WS-lead",
+      "core": true,
+      "title": "Measure batch throughput and memory per asset; record in architecture.md",
+      "owner_dirs": [
+        "docs/",
+        "config/",
+        "planning/",
+        "tests/e2e/",
+        "compose.yaml",
+        "Makefile",
+        "pyproject.toml",
+        "uv.lock",
+        ".env.example",
+        ".gitignore",
+        "orchestration/src/wikipulse_orchestration/definitions.py"
+      ],
+      "depends_on": [
+        "M2-01",
+        "M2-02",
+        "M2-03"
+      ],
+      "status": "todo",
+      "done_check": "architecture.md contains measured rows/s, MB/s and peak RSS per asset from a real run"
+    },
+    {
+      "id": "M3-01",
+      "milestone": "M3",
+      "workstream": "WS-ingest",
+      "core": true,
+      "title": "Resilience: reconnect with backoff, 15-minute server timeout, gap detection into ops.stream_gaps, schema drift and DLQ reasons",
+      "owner_dirs": [
+        "services/ingest/",
+        "tests/fixtures/page_change/"
+      ],
+      "depends_on": [
+        "M1-08"
+      ],
+      "status": "todo",
+      "done_check": "uv run pytest services/ingest -k resilience: a local SSE server replaying fixtures with 5 forced disconnects and one SIGKILL of the ingest process loses zero event_ids"
+    },
+    {
+      "id": "M3-02",
+      "milestone": "M3",
+      "workstream": "WS-stream",
+      "core": true,
+      "title": "Per-page 60-minute hopping windows into stream.page_activity_window, late routing via on_late, future_timestamp DLQ, dedup state TTL",
+      "owner_dirs": [
+        "services/stream_processor/"
+      ],
+      "depends_on": [
+        "M1-08"
+      ],
+      "status": "todo",
+      "done_check": "uv run pytest services/stream_processor -k windows: a reordered fixture replay produces the expected late-topic messages and window values"
+    },
+    {
+      "id": "M3-03",
+      "milestone": "M3",
+      "workstream": "WS-transform",
+      "core": true,
+      "title": "Stream vs batch reconciliation models",
+      "owner_dirs": [
+        "transform/"
+      ],
+      "depends_on": [
+        "M3-02",
+        "M2-05"
+      ],
+      "status": "todo",
+      "done_check": "gold.dq_reconciliation stream_vs_batch rows pass for 24 consecutive live hours"
+    },
+    {
+      "id": "M3-04",
+      "milestone": "M3",
+      "workstream": "WS-lead",
+      "core": true,
+      "title": "End-to-end chaos test: independent SSE capture for 20 minutes while ingest and processor are killed and restarted",
+      "owner_dirs": [
+        "docs/",
+        "config/",
+        "planning/",
+        "tests/e2e/",
+        "compose.yaml",
+        "Makefile",
+        "pyproject.toml",
+        "uv.lock",
+        ".env.example",
+        ".gitignore",
+        "orchestration/src/wikipulse_orchestration/definitions.py"
+      ],
+      "depends_on": [
+        "M3-01",
+        "M3-02"
+      ],
+      "status": "todo",
+      "done_check": "make chaos-check reports every captured event_id present in silver.page_change"
+    },
+    {
+      "id": "M3-05",
+      "milestone": "M3",
+      "workstream": "WS-lead",
+      "core": true,
+      "title": "24-hour stream measurement: rate, size, lag, memory; update architecture.md",
+      "owner_dirs": [
+        "docs/",
+        "config/",
+        "planning/",
+        "tests/e2e/",
+        "compose.yaml",
+        "Makefile",
+        "pyproject.toml",
+        "uv.lock",
+        ".env.example",
+        ".gitignore",
+        "orchestration/src/wikipulse_orchestration/definitions.py"
+      ],
+      "depends_on": [
+        "M3-01",
+        "M3-02"
+      ],
+      "status": "todo",
+      "done_check": "architecture.md stream volume row updated with 24 h numbers"
+    },
+    {
+      "id": "M4-01",
+      "milestone": "M4",
+      "workstream": "WS-transform",
+      "core": true,
+      "title": "fct_trending_hourly (robust z-score against 168 h median/MAD)",
+      "owner_dirs": [
+        "transform/"
+      ],
+      "depends_on": [
+        "M2-05",
+        "M2-01"
+      ],
+      "status": "todo",
+      "done_check": "dbt unit tests on hand-computed real fixture series pass; make dbt-build produces rows for every loaded hour"
+    },
+    {
+      "id": "M4-02",
+      "milestone": "M4",
+      "workstream": "WS-transform",
+      "core": true,
+      "title": "fct_edit_burst (Poisson tail against 28-day rate, distinct editor rule, merge of overlapping windows)",
+      "owner_dirs": [
+        "transform/"
+      ],
+      "depends_on": [
+        "M2-05",
+        "M2-03",
+        "M3-02"
+      ],
+      "status": "todo",
+      "done_check": "dbt unit tests with real fixture revision sequences pass"
+    },
+    {
+      "id": "M4-03",
+      "milestone": "M4",
+      "workstream": "WS-transform",
+      "core": true,
+      "title": "Reverts and eval_revert_agreement (confusion counts, agreement, kappa)",
+      "owner_dirs": [
+        "transform/"
+      ],
+      "depends_on": [
+        "M2-03",
+        "M2-05"
+      ],
+      "status": "todo",
+      "done_check": "gold.eval_revert_agreement populated for every overlapping wiki-month"
+    },
+    {
+      "id": "M4-04",
+      "milestone": "M4",
+      "workstream": "WS-transform",
+      "core": true,
+      "title": "fct_read_edit_overlap and editor mix",
+      "owner_dirs": [
+        "transform/"
+      ],
+      "depends_on": [
+        "M4-01",
+        "M4-02"
+      ],
+      "status": "todo",
+      "done_check": "make dbt-build passes; overlap lead_minutes distribution query returns rows"
+    },
+    {
+      "id": "M4-05",
+      "milestone": "M4",
+      "workstream": "WS-batch",
+      "core": true,
+      "title": "eval_labels asset: Portal:Current events and Main Page links for enwiki into bronze.eval_label_links (resolution to page_id happens in dbt)",
+      "owner_dirs": [
+        "orchestration/ (except definitions.py)",
+        "tests/fixtures/pageviews/",
+        "tests/fixtures/xml/",
+        "tests/fixtures/history/",
+        "tests/fixtures/pageview_complete/"
+      ],
+      "depends_on": [
+        "M2-01"
+      ],
+      "status": "todo",
+      "done_check": "bronze label rows for every day of the evaluation window; HTTP metrics show no 429 left unhandled"
+    },
+    {
+      "id": "M4-06",
+      "milestone": "M4",
+      "workstream": "WS-transform",
+      "core": true,
+      "title": "eval_detection_daily for trending and edit bursts with both baselines",
+      "owner_dirs": [
+        "transform/"
+      ],
+      "depends_on": [
+        "M4-01",
+        "M4-02",
+        "M4-05"
+      ],
+      "status": "todo",
+      "done_check": "gold.eval_detection_daily has rows per day, method and label set for the 28-day window"
+    },
+    {
+      "id": "M4-07",
+      "milestone": "M4",
+      "workstream": "WS-batch",
+      "core": true,
+      "title": "Enrichment asset: Action API categories, pageprops, redirects; Wikidata P31; cache with 7-day TTL",
+      "owner_dirs": [
+        "orchestration/ (except definitions.py)",
+        "tests/fixtures/pageviews/",
+        "tests/fixtures/xml/",
+        "tests/fixtures/history/",
+        "tests/fixtures/pageview_complete/"
+      ],
+      "depends_on": [
+        "M4-01",
+        "M4-02"
+      ],
+      "status": "todo",
+      "done_check": "second run within 7 days makes zero HTTP requests for cached pages; enrich tables populated"
+    },
+    {
+      "id": "M4-08",
+      "milestone": "M4",
+      "workstream": "WS-batch",
+      "core": true,
+      "title": "publish_serving for all marts",
+      "owner_dirs": [
+        "orchestration/ (except definitions.py)",
+        "tests/fixtures/pageviews/",
+        "tests/fixtures/xml/",
+        "tests/fixtures/history/",
+        "tests/fixtures/pageview_complete/"
+      ],
+      "depends_on": [
+        "M4-04",
+        "M4-06",
+        "M4-07"
+      ],
+      "status": "todo",
+      "done_check": "row counts in every mart equal the published gold partitions"
+    },
+    {
+      "id": "M4-09",
+      "milestone": "M4",
+      "workstream": "WS-lead",
+      "core": true,
+      "title": "Run the 35-day backfill and evaluation; record results in data-model.md",
+      "owner_dirs": [
+        "docs/",
+        "config/",
+        "planning/",
+        "tests/e2e/",
+        "compose.yaml",
+        "Makefile",
+        "pyproject.toml",
+        "uv.lock",
+        ".env.example",
+        ".gitignore",
+        "orchestration/src/wikipulse_orchestration/definitions.py"
+      ],
+      "depends_on": [
+        "M4-08"
+      ],
+      "status": "todo",
+      "done_check": "data-model.md contains measured precision@20 and recall per method and label set with baselines"
+    },
+    {
+      "id": "M5-01",
+      "milestone": "M5",
+      "workstream": "WS-serving",
+      "core": true,
+      "title": "All API endpoints with keyset pagination, filters, range limits, problem+json errors, metrics",
+      "owner_dirs": [
+        "services/api/"
+      ],
+      "depends_on": [
+        "M1-06",
+        "M0-08"
+      ],
+      "status": "todo",
+      "done_check": "uv run pytest services/api passes including schemathesis against docs/contracts/openapi.yaml"
+    },
+    {
+      "id": "M5-02",
+      "milestone": "M5",
+      "workstream": "WS-serving",
+      "core": true,
+      "title": "Postman collection generated from openapi.yaml with response tests; Newman run",
+      "owner_dirs": [
+        "services/api/"
+      ],
+      "depends_on": [
+        "M5-01"
+      ],
+      "status": "todo",
+      "done_check": "make newman runs the collection against the local stack with zero failures"
+    },
+    {
+      "id": "M5-03",
+      "milestone": "M5",
+      "workstream": "WS-dash",
+      "core": true,
+      "title": "Analyst dashboard (wiki, namespace, time range, editor type filters; trending, bursts, overlap, editor mix, freshness) and ops dashboard with alert rules",
+      "owner_dirs": [
+        "dashboards/"
+      ],
+      "depends_on": [
+        "M1-07",
+        "M0-08"
+      ],
+      "status": "todo",
+      "done_check": "make dash-check passes for every panel on both dashboards"
+    },
+    {
+      "id": "M5-04",
+      "milestone": "M5",
+      "workstream": "WS-infra",
+      "core": true,
+      "title": "CI end-to-end job: compose stack with fixture replay, Newman",
+      "owner_dirs": [
+        "infra/",
+        ".github/workflows/",
+        "deploy/"
+      ],
+      "depends_on": [
+        "M5-02",
+        "M1-08"
+      ],
+      "status": "todo",
+      "done_check": "the e2e workflow is green on a pushed branch"
+    },
+    {
+      "id": "M6-01",
+      "milestone": "M6",
+      "workstream": "WS-infra",
+      "core": true,
+      "title": "Event Hubs compatibility check: Quix with pre-created topics, OAUTHBEARER via managed identity, no compression",
+      "owner_dirs": [
+        "infra/",
+        ".github/workflows/",
+        "deploy/"
+      ],
+      "depends_on": [
+        "M1-08"
+      ],
+      "status": "todo",
+      "done_check": "a Container App processor consumes from Event Hubs and writes stream.wiki_activity_minute for 30 minutes without errors"
+    },
+    {
+      "id": "M6-02",
+      "milestone": "M6",
+      "workstream": "WS-infra",
+      "core": true,
+      "title": "Terraform: resource group, ADLS Gen2 with lifecycle, Event Hubs and topics, PostgreSQL Flexible with Entra, Key Vault, Log Analytics and App Insights, Container Apps environment, apps and jobs, identities, budget alert",
+      "owner_dirs": [
+        "infra/",
+        ".github/workflows/",
+        "deploy/"
+      ],
+      "depends_on": [
+        "M6-01"
+      ],
+      "status": "todo",
+      "done_check": "make azure-up completes and make azure-smoke passes; make azure-down leaves the workload resource group deleted"
+    },
+    {
+      "id": "M6-03",
+      "milestone": "M6",
+      "workstream": "WS-common",
+      "core": true,
+      "title": "Azure profiles: Event Hubs token callback, Azure Monitor exporter, abfss DuckLake data path with managed identity",
+      "owner_dirs": [
+        "libs/common/"
+      ],
+      "depends_on": [
+        "M6-01"
+      ],
+      "status": "todo",
+      "done_check": "uv run pytest libs/common -k azure passes; the azure profile runs in M6-02 smoke"
+    },
+    {
+      "id": "M6-04",
+      "milestone": "M6",
+      "workstream": "WS-infra",
+      "core": true,
+      "title": "GitHub Actions: image build to GHCR, OIDC deploy workflow",
+      "owner_dirs": [
+        "infra/",
+        ".github/workflows/",
+        "deploy/"
+      ],
+      "depends_on": [
+        "M6-02"
+      ],
+      "status": "todo",
+      "done_check": "workflow_dispatch deploy succeeds without stored client secrets"
+    },
+    {
+      "id": "M6-05",
+      "milestone": "M6",
+      "workstream": "WS-lead",
+      "core": true,
+      "title": "Azure run: up, backfill quick profile, 24 h live, down; record timings and actual cost",
+      "owner_dirs": [
+        "docs/",
+        "config/",
+        "planning/",
+        "tests/e2e/",
+        "compose.yaml",
+        "Makefile",
+        "pyproject.toml",
+        "uv.lock",
+        ".env.example",
+        ".gitignore",
+        "orchestration/src/wikipulse_orchestration/definitions.py"
+      ],
+      "depends_on": [
+        "M6-02",
+        "M6-03",
+        "M6-04",
+        "M5-01"
+      ],
+      "status": "todo",
+      "done_check": "architecture.md contains measured up/down times and Cost Management spend"
+    },
+    {
+      "id": "M7-01",
+      "milestone": "M7",
+      "workstream": "WS-lead",
+      "core": true,
+      "title": "README with diagram, run instructions, test approach and real numbers",
+      "owner_dirs": [
+        "docs/",
+        "config/",
+        "planning/",
+        "tests/e2e/",
+        "compose.yaml",
+        "Makefile",
+        "pyproject.toml",
+        "uv.lock",
+        ".env.example",
+        ".gitignore",
+        "orchestration/src/wikipulse_orchestration/definitions.py"
+      ],
+      "depends_on": [
+        "M4-09",
+        "M5-03",
+        "M6-05"
+      ],
+      "status": "todo",
+      "done_check": "README sections present; every number in it traces to a recorded run"
+    },
+    {
+      "id": "M7-02",
+      "milestone": "M7",
+      "workstream": "WS-lead",
+      "core": true,
+      "title": "Update architecture.md, data-model.md and ADRs with measured results and any changed decisions",
+      "owner_dirs": [
+        "docs/",
+        "config/",
+        "planning/",
+        "tests/e2e/",
+        "compose.yaml",
+        "Makefile",
+        "pyproject.toml",
+        "uv.lock",
+        ".env.example",
+        ".gitignore",
+        "orchestration/src/wikipulse_orchestration/definitions.py"
+      ],
+      "depends_on": [
+        "M4-09",
+        "M6-05"
+      ],
+      "status": "todo",
+      "done_check": "no section of the docs still describes a plan that differs from the built system"
+    },
+    {
+      "id": "O1-01",
+      "milestone": "O1",
+      "workstream": "WS-infra",
+      "core": false,
+      "title": "API Management Consumption tier in front of the API with a rate-limit policy",
+      "owner_dirs": [
+        "infra/",
+        ".github/workflows/",
+        "deploy/"
+      ],
+      "depends_on": [
+        "M6-02"
+      ],
+      "status": "todo",
+      "done_check": "requests through the gateway succeed and the policy returns 429 above the limit"
+    },
+    {
+      "id": "O2-01",
+      "milestone": "O2",
+      "workstream": "WS-batch",
+      "core": false,
+      "title": "Lift Wing outlink-topic-model enrichment for trending pages",
+      "owner_dirs": [
+        "orchestration/ (except definitions.py)",
+        "tests/fixtures/pageviews/",
+        "tests/fixtures/xml/",
+        "tests/fixtures/history/",
+        "tests/fixtures/pageview_complete/"
+      ],
+      "depends_on": [
+        "M4-07"
+      ],
+      "status": "todo",
+      "done_check": "topic labels stored for every trending page in the window"
+    },
+    {
+      "id": "O3-01",
+      "milestone": "O3",
+      "workstream": "WS-transform",
+      "core": false,
+      "title": "dewiki evaluation labels (Hauptseite news section) and evaluation",
+      "owner_dirs": [
+        "transform/"
+      ],
+      "depends_on": [
+        "M4-06"
+      ],
+      "status": "todo",
+      "done_check": "gold.eval_detection_daily has dewiki rows"
+    },
+    {
+      "id": "O4-01",
+      "milestone": "O4",
+      "workstream": "WS-infra",
+      "core": false,
+      "title": "Dagster webserver on Azure behind authentication",
+      "owner_dirs": [
+        "infra/",
+        ".github/workflows/",
+        "deploy/"
+      ],
+      "depends_on": [
+        "M6-02"
+      ],
+      "status": "todo",
+      "done_check": "Dagster UI reachable on Azure showing asset history"
+    }
+  ]
+}

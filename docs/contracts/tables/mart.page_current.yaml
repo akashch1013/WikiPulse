@@ -1,0 +1,56 @@
+name: mart.page_current
+store: postgres:mart
+owner_workstream: WS-transform
+grain: One row per (wiki_id, page_id) current page state for pages referenced by any mart.
+primary_key:
+- wiki_id
+- page_id
+partitioning: none
+indexes:
+- (wiki_id, namespace_id)
+freshness_sla: Published within 15 minutes of the gold build
+columns:
+- name: wiki_id
+  type: varchar
+  nullable: false
+  description: Wiki database name, e.g. enwiki.
+- name: page_id
+  type: bigint
+  nullable: false
+  description: Page ID.
+- name: title
+  type: text
+  nullable: false
+  description: Current title.
+- name: namespace_id
+  type: integer
+  nullable: false
+  description: Namespace.
+- name: is_redirect
+  type: boolean
+  nullable: false
+  description: Redirect.
+- name: is_deleted
+  type: boolean
+  nullable: false
+  description: Deleted.
+- name: wikibase_item_id
+  type: text
+  nullable: true
+  description: Wikidata item.
+- name: instance_of_label
+  type: text
+  nullable: true
+  description: P31 label.
+- name: categories
+  type: text[]
+  nullable: true
+  description: Visible categories.
+- name: updated_at
+  type: timestamptz
+  nullable: false
+  description: Last change.
+tests:
+  reconciliation: Row count and sum of measures per published partition equal gold.dim_page (is_current) + gold.dim_page_enrichment
+    for the same partition.
+notes: Published from gold.dim_page (is_current) + gold.dim_page_enrichment by delete+insert per partition in one transaction.

@@ -1,0 +1,59 @@
+name: gold.dq_reconciliation
+store: lake:gold
+owner_workstream: WS-transform
+grain: 'One row per (check_name, wiki_id, period_start): the result of one reconciliation check.'
+primary_key:
+- check_name
+- wiki_id
+- period_start
+partitioning: check_name
+sort_order:
+- check_name
+- period_start
+freshness_sla: Each batch run
+columns:
+- name: check_name
+  type: varchar
+  nullable: false
+  description: stream_vs_batch_wiki_hour, hourly_vs_pageview_complete_day, stream_vs_history_edits_day, resolved_views_share, snapshot_vs_stream_state.
+- name: wiki_id
+  type: varchar
+  nullable: false
+  description: Wiki database name, e.g. enwiki.
+- name: period_start
+  type: timestamptz
+  nullable: false
+  description: Period start.
+- name: period_end
+  type: timestamptz
+  nullable: false
+  description: Period end.
+- name: left_value
+  type: double
+  nullable: false
+  description: Left-side measure.
+- name: right_value
+  type: double
+  nullable: false
+  description: Right-side measure.
+- name: diff
+  type: double
+  nullable: false
+  description: left - right.
+- name: tolerance
+  type: double
+  nullable: false
+  description: Allowed absolute difference or rate.
+- name: passed
+  type: boolean
+  nullable: false
+  description: Within tolerance.
+- name: checked_at
+  type: timestamptz
+  nullable: false
+  description: Check time.
+tests:
+  unique:
+  - - check_name
+    - wiki_id
+    - period_start

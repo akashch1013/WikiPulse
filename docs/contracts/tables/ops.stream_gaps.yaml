@@ -1,0 +1,45 @@
+name: ops.stream_gaps
+store: postgres:ops
+owner_workstream: WS-db
+grain: One row per detected gap in stream coverage.
+primary_key:
+- gap_id
+partitioning: none
+indexes:
+- (consumer, gap_start)
+freshness_sla: n/a
+columns:
+- name: gap_id
+  type: bigserial
+  nullable: false
+  description: Identifier.
+- name: consumer
+  type: text
+  nullable: false
+  description: Consumer.
+- name: gap_start
+  type: timestamptz
+  nullable: false
+  description: Last event time before the gap.
+- name: gap_end
+  type: timestamptz
+  nullable: false
+  description: First event time after.
+- name: reason
+  type: text
+  nullable: false
+  description: retention_exceeded, upstream_outage, ingest_down.
+- name: detected_at
+  type: timestamptz
+  nullable: false
+  description: Detection time.
+- name: repaired_by
+  type: text
+  nullable: true
+  description: e.g. mediawiki_history snapshot used to backfill counts.
+tests:
+  accepted_values:
+    reason:
+    - retention_exceeded
+    - upstream_outage
+    - ingest_down

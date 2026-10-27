@@ -1,0 +1,32 @@
+name: enrich.wikidata_entity_cache
+store: postgres:enrich
+owner_workstream: WS-batch
+grain: 'One row per Wikidata item: P31 values and English label, cached 7 days.'
+primary_key:
+- qid
+partitioning: none
+indexes:
+- (fetched_at)
+freshness_sla: As above
+columns:
+- name: qid
+  type: text
+  nullable: false
+  description: Item ID.
+- name: label_en
+  type: text
+  nullable: true
+  description: English label.
+- name: instance_of
+  type: text[]
+  nullable: false
+  description: P31 item IDs.
+- name: instance_of_labels
+  type: text[]
+  nullable: false
+  description: Labels for P31 values.
+- name: fetched_at
+  type: timestamptz
+  nullable: false
+  description: Fetch time.
+tests: {}

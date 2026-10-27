@@ -1,0 +1,56 @@
+name: mart.wiki_activity_hourly
+store: postgres:mart
+owner_workstream: WS-transform
+grain: One row per (wiki_id, hour_utc, editor_type), all wikis, last 35 days.
+primary_key:
+- wiki_id
+- hour_utc
+- editor_type
+partitioning: range by month on hour_utc
+indexes:
+- (wiki_id, hour_utc)
+freshness_sla: Published within 15 minutes of the gold build
+columns:
+- name: wiki_id
+  type: varchar
+  nullable: false
+  description: Wiki database name, e.g. enwiki.
+- name: hour_utc
+  type: timestamptz
+  nullable: false
+  description: Hour start.
+- name: editor_type
+  type: text
+  nullable: false
+  description: Editor type.
+- name: edits
+  type: bigint
+  nullable: false
+  description: Edits.
+- name: creates
+  type: bigint
+  nullable: false
+  description: Creates.
+- name: moves
+  type: bigint
+  nullable: false
+  description: Moves.
+- name: deletes
+  type: bigint
+  nullable: false
+  description: Deletes.
+- name: reverts
+  type: bigint
+  nullable: false
+  description: Reverts.
+- name: distinct_pages
+  type: bigint
+  nullable: false
+  description: Distinct pages.
+- name: distinct_editors
+  type: bigint
+  nullable: false
+  description: Distinct editors.
+tests:
+  reconciliation: Row count and sum of measures per published partition equal gold.fct_wiki_activity_hourly for the same partition.
+notes: Published from gold.fct_wiki_activity_hourly by delete+insert per partition in one transaction.

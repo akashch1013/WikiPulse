@@ -1,0 +1,77 @@
+name: silver.page_versions
+store: lake:silver
+owner_workstream: WS-transform
+grain: 'One row per (wiki_id, page_id, valid_from): one version of a page''s tracked attributes (SCD type 2), built from monthly
+  snapshots and stream create/move/delete/undelete events for focus wikis.'
+primary_key:
+- wiki_id
+- page_id
+- valid_from
+partitioning: wiki_id
+sort_order:
+- wiki_id
+- page_id
+- valid_from
+freshness_sla: Hourly (stream changes), monthly (snapshot)
+columns:
+- name: page_sk
+  type: bigint
+  nullable: false
+  description: 'Surrogate key: hash of (wiki_id, page_id, valid_from).'
+- name: wiki_id
+  type: varchar
+  nullable: false
+  description: Wiki database name, e.g. enwiki.
+- name: page_id
+  type: bigint
+  nullable: false
+  description: Durable page identity.
+- name: title
+  type: varchar
+  nullable: false
+  description: Title during this version, without namespace prefix.
+- name: namespace_id
+  type: integer
+  nullable: false
+  description: Namespace during this version.
+- name: is_redirect
+  type: boolean
+  nullable: false
+  description: Redirect during this version.
+- name: redirect_target_page_id
+  type: bigint
+  nullable: true
+  description: Target page when a redirect and resolvable.
+- name: is_deleted
+  type: boolean
+  nullable: false
+  description: Page deleted during this version.
+- name: valid_from
+  type: timestamptz
+  nullable: false
+  description: Version start (inclusive).
+- name: valid_to
+  type: timestamptz
+  nullable: false
+  description: Version end (exclusive); 9999-12-31T00:00:00Z for the current version.
+- name: is_current
+  type: boolean
+  nullable: false
+  description: valid_to = 9999-12-31.
+- name: source
+  type: varchar
+  nullable: false
+  description: 'snapshot or stream: what created this version.'
+tests:
+  unique:
+  - page_sk
+  - - wiki_id
+    - page_id
+    - valid_from
+  accepted_values:
+    source:
+    - snapshot
+    - stream
+  custom:
+  - No overlapping [valid_from, valid_to) intervals per (wiki_id, page_id).
+  - Exactly one is_current row per (wiki_id, page_id).

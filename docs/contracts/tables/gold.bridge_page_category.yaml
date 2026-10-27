@@ -1,0 +1,35 @@
+name: gold.bridge_page_category
+store: lake:gold
+owner_workstream: WS-transform
+grain: One row per (wiki_id, page_id, category_title) for enriched pages.
+primary_key:
+- wiki_id
+- page_id
+- category_title
+partitioning: wiki_id
+sort_order:
+- wiki_id
+- category_title
+freshness_sla: Daily
+columns:
+- name: wiki_id
+  type: varchar
+  nullable: false
+  description: Wiki database name, e.g. enwiki.
+- name: page_id
+  type: bigint
+  nullable: false
+  description: Page ID.
+- name: category_title
+  type: varchar
+  nullable: false
+  description: Category title without prefix.
+- name: is_hidden
+  type: boolean
+  nullable: false
+  description: Hidden maintenance category.
+tests:
+  unique:
+  - - wiki_id
+    - page_id
+    - category_title

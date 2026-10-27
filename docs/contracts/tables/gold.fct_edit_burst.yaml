@@ -1,0 +1,62 @@
+name: gold.fct_edit_burst
+store: lake:gold
+owner_workstream: WS-transform
+grain: One row per (wiki_id, page_id, window_start) for 60-minute windows (5-minute step) flagged as an edit burst; overlapping
+  flagged windows are merged.
+primary_key:
+- wiki_id
+- page_id
+- window_start
+partitioning: wiki_id, window_date
+sort_order:
+- wiki_id
+- window_start
+freshness_sla: Hourly
+columns:
+- name: wiki_id
+  type: varchar
+  nullable: false
+  description: Wiki database name, e.g. enwiki.
+- name: page_id
+  type: bigint
+  nullable: false
+  description: Page ID.
+- name: window_start
+  type: timestamptz
+  nullable: false
+  description: Burst start.
+- name: window_end
+  type: timestamptz
+  nullable: false
+  description: Burst end.
+- name: window_date
+  type: date
+  nullable: false
+  description: Partition column.
+- name: edits
+  type: integer
+  nullable: false
+  description: Non-bot edits in the burst.
+- name: distinct_editors
+  type: integer
+  nullable: false
+  description: Distinct editor_key.
+- name: baseline_rate_per_hour
+  type: double
+  nullable: false
+  description: Page's mean hourly non-bot edit rate over trailing 28 days, floored.
+- name: poisson_p
+  type: double
+  nullable: false
+  description: P(X >= edits | baseline rate).
+- name: reverts
+  type: integer
+  nullable: false
+  description: Reverts within the burst.
+tests:
+  unique:
+  - - wiki_id
+    - page_id
+    - window_start
+  custom:
+  - poisson_p < configured threshold and distinct_editors >= 3 for every row.

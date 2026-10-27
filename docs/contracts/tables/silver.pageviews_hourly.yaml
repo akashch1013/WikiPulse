@@ -1,0 +1,68 @@
+name: silver.pageviews_hourly
+store: lake:silver
+owner_workstream: WS-transform
+grain: One row per (wiki_id, page_id, hour_utc, access_method, source_title) where the title resolved to a page.
+primary_key:
+- wiki_id
+- hour_utc
+- access_method
+- source_title
+partitioning: wiki_id, hour_date
+sort_order:
+- wiki_id
+- hour_utc
+- page_id
+freshness_sla: Within 4 hours of hour end
+columns:
+- name: wiki_id
+  type: varchar
+  nullable: false
+  description: Wiki database name, e.g. enwiki.
+- name: hour_utc
+  type: timestamptz
+  nullable: false
+  description: Start of the hour (normalised from the file name).
+- name: hour_date
+  type: date
+  nullable: false
+  description: Partition column.
+- name: access_method
+  type: varchar
+  nullable: false
+  description: desktop or mobile-web.
+- name: source_title
+  type: varchar
+  nullable: false
+  description: Normalised title as requested.
+- name: page_id
+  type: bigint
+  nullable: false
+  description: Resolved page ID (redirect target when via_redirect).
+- name: via_redirect
+  type: boolean
+  nullable: false
+  description: Title was a redirect resolved to its target.
+- name: views
+  type: bigint
+  nullable: false
+  description: Views.
+- name: source_file
+  type: varchar
+  nullable: false
+  description: Source file URL.
+tests:
+  not_null:
+  - wiki_id
+  - hour_utc
+  - page_id
+  - views
+  unique:
+  - - wiki_id
+    - hour_utc
+    - access_method
+    - source_title
+  accepted_values:
+    access_method:
+    - desktop
+    - mobile-web
+  reconciliation: 'Per file: resolved views + unresolved views = bronze views (exact).'

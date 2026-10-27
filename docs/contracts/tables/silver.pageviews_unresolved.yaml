@@ -1,0 +1,56 @@
+name: silver.pageviews_unresolved
+store: lake:silver
+owner_workstream: WS-transform
+grain: One row per (wiki_id, hour_utc, access_method, source_title) whose title did not resolve to an existing page at that
+  hour.
+primary_key:
+- wiki_id
+- hour_utc
+- access_method
+- source_title
+partitioning: wiki_id, hour_date
+sort_order:
+- wiki_id
+- hour_utc
+freshness_sla: Same as silver.pageviews_hourly
+columns:
+- name: wiki_id
+  type: varchar
+  nullable: false
+  description: Wiki database name, e.g. enwiki.
+- name: hour_utc
+  type: timestamptz
+  nullable: false
+  description: Hour start.
+- name: hour_date
+  type: date
+  nullable: false
+  description: Partition column.
+- name: access_method
+  type: varchar
+  nullable: false
+  description: desktop or mobile-web.
+- name: source_title
+  type: varchar
+  nullable: false
+  description: Normalised title.
+- name: raw_title
+  type: varchar
+  nullable: false
+  description: Title as published.
+- name: reason
+  type: varchar
+  nullable: false
+  description: not_found, invalid_title, special_page, decode_error.
+- name: views
+  type: bigint
+  nullable: false
+  description: Views.
+tests:
+  accepted_values:
+    reason:
+    - not_found
+    - invalid_title
+    - special_page
+    - decode_error
+  dq_metric: Resolved share of views per wiki-hour; threshold set after the first full-day measurement and recorded in gold.dq_reconciliation.

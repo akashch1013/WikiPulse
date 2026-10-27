@@ -1,0 +1,48 @@
+name: silver.eval_labels
+store: lake:silver
+owner_workstream: WS-transform
+grain: 'One row per (label_set, day, wiki_id, page_id): a page linked from a labelling page for that day.'
+primary_key:
+- label_set
+- day
+- wiki_id
+- page_id
+partitioning: label_set
+sort_order:
+- label_set
+- day
+freshness_sla: Daily, for the evaluation window
+columns:
+- name: label_set
+  type: varchar
+  nullable: false
+  description: current_events or main_page.
+- name: day
+  type: date
+  nullable: false
+  description: Label day.
+- name: wiki_id
+  type: varchar
+  nullable: false
+  description: Wiki database name, e.g. enwiki.
+- name: page_id
+  type: bigint
+  nullable: false
+  description: Linked page (redirects resolved).
+- name: source_page
+  type: varchar
+  nullable: false
+  description: Labelling page title.
+- name: source_rev_id
+  type: bigint
+  nullable: false
+  description: Revision of the labelling page used.
+- name: fetched_at
+  type: timestamptz
+  nullable: false
+  description: Fetch time.
+tests:
+  accepted_values:
+    label_set:
+    - current_events
+    - main_page

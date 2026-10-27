@@ -1,0 +1,61 @@
+name: bronze.pageviews_hourly
+store: lake:bronze
+owner_workstream: WS-batch
+grain: One row per line of an hourly pageviews file for the focus domain codes (en, en.m, de, de.m), unmodified apart from
+  field splitting.
+primary_key:
+- source_file
+- line_number
+partitioning: file_hour (date + hour from file name)
+sort_order:
+- file_hour
+- domain_code
+- page_title
+freshness_sla: Within 4 hours of file hour (upstream publishes after ~2.2 h median)
+columns:
+- name: file_hour
+  type: timestamptz
+  nullable: false
+  description: Hour from the file name, UTC.
+- name: domain_code
+  type: varchar
+  nullable: false
+  description: Domain code as published, e.g. en.m.
+- name: page_title
+  type: varchar
+  nullable: false
+  description: Title as published (raw, may contain percent-encoding).
+- name: views
+  type: bigint
+  nullable: false
+  description: count_views field.
+- name: line_number
+  type: bigint
+  nullable: false
+  description: 1-based line number in the source file.
+- name: source_file
+  type: varchar
+  nullable: false
+  description: Source file URL or Kafka topic/partition/offset range the row came from.
+- name: loaded_at
+  type: timestamptz
+  nullable: false
+  description: Time the row was written (UTC).
+- name: run_id
+  type: varchar
+  nullable: false
+  description: Orchestrator run or sink batch identifier.
+tests:
+  not_null:
+  - file_hour
+  - domain_code
+  - page_title
+  - views
+  accepted_values:
+    domain_code:
+    - en
+    - en.m
+    - de
+    - de.m
+  reconciliation: Sum of views per file equals the total computed while streaming the file (stored in ops.batch_manifest.rows_out
+    and checksum).

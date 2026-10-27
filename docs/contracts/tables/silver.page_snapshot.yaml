@@ -1,0 +1,69 @@
+name: silver.page_snapshot
+store: lake:silver
+owner_workstream: WS-transform
+grain: 'One row per (wiki_id, dump_date, page_id): typed page state at a dump run with title split from namespace prefix.'
+primary_key:
+- wiki_id
+- dump_date
+- page_id
+partitioning: wiki_id, dump_date
+sort_order:
+- wiki_id
+- dump_date
+- namespace_id
+- title
+freshness_sla: Monthly
+columns:
+- name: wiki_id
+  type: varchar
+  nullable: false
+  description: Wiki database name, e.g. enwiki.
+- name: dump_date
+  type: date
+  nullable: false
+  description: Dump run.
+- name: page_id
+  type: bigint
+  nullable: false
+  description: Page ID.
+- name: namespace_id
+  type: integer
+  nullable: false
+  description: Namespace.
+- name: title
+  type: varchar
+  nullable: false
+  description: Title without namespace prefix, underscores for spaces.
+- name: is_redirect
+  type: boolean
+  nullable: false
+  description: Redirect flag.
+- name: redirect_target_title
+  type: varchar
+  nullable: true
+  description: Normalised target title.
+- name: redirect_target_namespace_id
+  type: integer
+  nullable: true
+  description: Target namespace.
+- name: latest_rev_id
+  type: bigint
+  nullable: false
+  description: Latest revision.
+- name: latest_rev_ts
+  type: timestamptz
+  nullable: false
+  description: Latest revision time.
+- name: page_bytes
+  type: bigint
+  nullable: true
+  description: Latest revision size.
+tests:
+  unique:
+  - - wiki_id
+    - dump_date
+    - page_id
+  - - wiki_id
+    - dump_date
+    - namespace_id
+    - title

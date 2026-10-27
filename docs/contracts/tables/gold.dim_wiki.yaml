@@ -1,0 +1,46 @@
+name: gold.dim_wiki
+store: lake:gold
+owner_workstream: WS-transform
+grain: One row per wiki_id observed in the stream or configured as a focus wiki.
+primary_key:
+- wiki_id
+partitioning: none
+sort_order:
+- wiki_id
+freshness_sla: Daily
+columns:
+- name: wiki_id
+  type: varchar
+  nullable: false
+  description: Wiki database name, e.g. enwiki.
+- name: domain
+  type: varchar
+  nullable: false
+  description: e.g. en.wikipedia.org.
+- name: project
+  type: varchar
+  nullable: false
+  description: wikipedia, wiktionary, commons, wikidata, ...
+- name: language_code
+  type: varchar
+  nullable: true
+  description: Language code, null for multilingual wikis.
+- name: pageview_desktop_code
+  type: varchar
+  nullable: true
+  description: Hourly pageviews domain code for desktop, e.g. en.
+- name: pageview_mobile_code
+  type: varchar
+  nullable: true
+  description: e.g. en.m.
+- name: is_focus
+  type: boolean
+  nullable: false
+  description: Page-level coverage enabled (enwiki, dewiki).
+- name: first_seen_at
+  type: timestamptz
+  nullable: false
+  description: First event seen.
+tests:
+  unique:
+  - wiki_id

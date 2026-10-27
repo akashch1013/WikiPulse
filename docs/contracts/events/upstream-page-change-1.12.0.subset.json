@@ -1,0 +1,82 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://wikipulse.local/contracts/events/upstream-page-change-1.12.0.subset.json",
+  "title": "Upstream mediawiki/page/change 1.12.0 (fields read by WikiPulse)",
+  "description": "Subset of the Wikimedia mediawiki/page/change 1.12.0 event that the ingest service reads from the mediawiki.page_change.v1 stream. The ingest service validates every event against the full vendored upstream schema; this document lists the fields WikiPulse depends on, so an upstream change to any of them is a breaking change for WikiPulse.",
+  "$comment": "Source: https://schema.wikimedia.org/repositories/primary/jsonschema/mediawiki/page/change/1.12.0 (Wikimedia Event Platform). Fields not listed here are ignored and not stored.",
+  "type": "object",
+  "required": ["$schema", "meta", "dt", "wiki_id", "page_change_kind", "changelog_kind", "page", "performer"],
+  "properties": {
+    "$schema": {"type": "string", "description": "Upstream schema URI, e.g. /mediawiki/page/change/1.12.0. Major/minor are used for drift detection."},
+    "meta": {
+      "type": "object",
+      "required": ["id", "dt", "domain", "stream"],
+      "properties": {
+        "id": {"type": "string", "format": "uuid", "description": "Unique event ID; the deduplication key end to end."},
+        "dt": {"type": "string", "format": "date-time", "description": "Time the event was produced upstream (processing-side)."},
+        "domain": {"type": "string", "description": "Wiki domain. The value 'canary' marks synthetic monitoring events, which are dropped."},
+        "stream": {"type": "string"}
+      }
+    },
+    "dt": {"type": "string", "format": "date-time", "description": "Time the change happened in MediaWiki. Used as event time."},
+    "wiki_id": {"type": "string", "description": "Database name of the wiki, e.g. enwiki."},
+    "page_change_kind": {"type": "string", "enum": ["create", "undelete", "edit", "move", "delete", "visibility_change"]},
+    "changelog_kind": {"type": "string", "enum": ["insert", "update", "delete"]},
+    "page": {
+      "type": "object",
+      "required": ["page_id", "page_title", "namespace_id"],
+      "properties": {
+        "page_id": {"type": "integer", "minimum": 0},
+        "page_title": {"type": "string"},
+        "namespace_id": {"type": "integer"},
+        "is_redirect": {"type": "boolean"},
+        "wikibase_item_id": {"type": "string"}
+      }
+    },
+    "performer": {
+      "type": "object",
+      "properties": {
+        "user_id": {"type": "integer", "description": "Pseudonymised at ingest; never stored."},
+        "user_text": {"type": "string", "description": "User name or temporary account name. Pseudonymised at ingest; never stored."},
+        "is_bot": {"type": "boolean"},
+        "is_temp": {"type": "boolean"},
+        "is_system": {"type": "boolean"},
+        "groups": {"type": "array", "items": {"type": "string"}}
+      }
+    },
+    "revision": {
+      "type": "object",
+      "properties": {
+        "rev_id": {"type": "integer"},
+        "rev_parent_id": {"type": "integer"},
+        "rev_dt": {"type": "string", "format": "date-time"},
+        "rev_sha1": {"type": "string"},
+        "rev_size": {"type": "integer"},
+        "is_minor_edit": {"type": "boolean"},
+        "revert": {
+          "type": "object",
+          "properties": {
+            "is_exact": {"type": "boolean"},
+            "method": {"type": "string", "enum": ["rollback", "undo", "manual"]},
+            "rev_original_id": {"type": "integer"},
+            "rev_original_dt": {"type": "string", "format": "date-time"},
+            "rev_reverted_oldest_id": {"type": "integer"},
+            "rev_reverted_newest_id": {"type": "integer"}
+          }
+        }
+      }
+    },
+    "prior_state": {
+      "type": "object",
+      "properties": {
+        "page": {
+          "type": "object",
+          "properties": {
+            "page_title": {"type": "string"},
+            "namespace_id": {"type": "integer"}
+          }
+        }
+      }
+    }
+  }
+}

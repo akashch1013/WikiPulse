@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://wikipulse.local/contracts/events/page_change_event.v1.json",
+  "title": "WikiPulse page change event v1",
+  "description": "Validated, pseudonymised page change produced by the ingest service to Kafka topic wikipulse.page_change.v1. Message key is \"<wiki_id>:<page_id>\" so all changes to one page are ordered within one partition. Headers: upstream_schema, sse_position. Contains no user names, user IDs, IP addresses or edit comments.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["event_id", "event_dt", "ingested_at", "upstream_schema", "sse_position", "wiki_id", "change_kind", "page_id", "page_title", "namespace_id", "is_redirect", "editor_type"],
+  "properties": {
+    "event_id": {"type": "string", "format": "uuid", "description": "Upstream meta.id. Deduplication and idempotency key."},
+    "event_dt": {"type": "string", "format": "date-time", "description": "Upstream dt (UTC). Event time for all windows."},
+    "ingested_at": {"type": "string", "format": "date-time", "description": "Time the ingest service received the event (UTC)."},
+    "upstream_schema": {"type": "string", "description": "Upstream $schema value, e.g. /mediawiki/page/change/1.12.0."},
+    "sse_position": {"type": "string", "description": "Opaque EventStreams Last-Event-ID JSON array at which this event was received."},
+    "wiki_id": {"type": "string", "pattern": "^[a-z0-9_]+$", "description": "Wiki database name, e.g. enwiki."},
+    "change_kind": {"type": "string", "enum": ["create", "edit", "move", "delete", "undelete", "visibility_change"]},
+    "page_id": {"type": "integer", "minimum": 1},
+    "page_title": {"type": "string", "description": "Title after the change, without namespace prefix, underscores for spaces."},
+    "namespace_id": {"type": "integer"},
+    "is_redirect": {"type": "boolean"},
+    "wikibase_item_id": {"type": ["string", "null"], "pattern": "^Q[0-9]+$"},
+    "prior_page_title": {"type": ["string", "null"], "description": "Title before a move; null for other change kinds."},
+    "prior_namespace_id": {"type": ["integer", "null"]},
+    "rev_id": {"type": ["integer", "null"], "description": "Null for delete events."},
+    "rev_parent_id": {"type": ["integer", "null"]},
+    "rev_dt": {"type": ["string", "null"], "format": "date-time"},
+    "rev_sha1": {"type": ["string", "null"], "description": "Base-36 SHA-1 of revision content as published by MediaWiki."},
+    "rev_size": {"type": ["integer", "null"], "minimum": 0},
+    "is_minor_edit": {"type": ["boolean", "null"]},
+    "revert": {
+      "description": "Present when MediaWiki identified this revision as a revert.",
+      "$comment": "Mirrors upstream revision.revert (page/change 1.12.0).",
+      "oneOf": [
+        {"type": "null"},
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["method"],
+          "properties": {
+            "method": {"type": "string", "enum": ["rollback", "undo", "manual"]},
+            "is_exact": {"type": ["boolean", "null"]},
+            "rev_original_id": {"type": ["integer", "null"]},
+            "rev_reverted_oldest_id": {"type": ["integer", "null"]},
+            "rev_reverted_newest_id": {"type": ["integer", "null"]}
+          }
+        }
+      ]
+    },
+    "editor_type": {"type": "string", "enum": ["bot", "temp", "registered", "anonymous_ip", "system"], "description": "bot: performer in a bot group; temp: temporary account; anonymous_ip: logged-out edit attributed to an IP; system: MediaWiki maintenance actor; registered: everyone else."},
+    "editor_key": {"type": ["string", "null"], "pattern": "^[0-9a-f]{32}$", "description": "HMAC-SHA256 over \"<wiki_id>:<user_id>\" (fallback \"<wiki_id>:<user_text>\" when user_id is absent) under a secret key, truncated to 16 bytes and hex-encoded. Used only for distinct counts. Null for system actors."}
+  }
+}

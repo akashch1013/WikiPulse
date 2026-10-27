@@ -1,0 +1,75 @@
+name: stream.wiki_activity_minute
+store: postgres:stream
+owner_workstream: WS-stream
+grain: One row per (wiki_id, window_start, editor_type) for closed 1-minute event-time windows, all wikis; provisional.
+primary_key:
+- wiki_id
+- window_start
+- editor_type
+partitioning: range by month on window_start; 7-day retention via partition drop
+indexes:
+- (wiki_id, window_start)
+- (window_start)
+freshness_sla: Window end + 5 min grace + 1 min
+columns:
+- name: wiki_id
+  type: varchar
+  nullable: false
+  description: Wiki database name, e.g. enwiki.
+- name: window_start
+  type: timestamptz
+  nullable: false
+  description: Window start.
+- name: window_end
+  type: timestamptz
+  nullable: false
+  description: Window end.
+- name: editor_type
+  type: text
+  nullable: false
+  description: Editor type.
+- name: edits
+  type: integer
+  nullable: false
+  description: Edits.
+- name: creates
+  type: integer
+  nullable: false
+  description: Creates.
+- name: moves
+  type: integer
+  nullable: false
+  description: Moves.
+- name: deletes
+  type: integer
+  nullable: false
+  description: Deletes.
+- name: reverts
+  type: integer
+  nullable: false
+  description: Reverts.
+- name: distinct_pages
+  type: integer
+  nullable: false
+  description: Distinct pages.
+- name: distinct_editors
+  type: integer
+  nullable: false
+  description: Distinct editor keys.
+- name: emitted_at
+  type: timestamptz
+  nullable: false
+  description: Emission time.
+tests:
+  freshness:
+    column: window_end
+    warn_after_minutes: 10
+    error_after_minutes: 30
+  accepted_values:
+    editor_type:
+    - bot
+    - temp
+    - registered
+    - anonymous_ip
+    - system
+notes: Written by upsert ON CONFLICT (wiki_id, window_start, editor_type) DO UPDATE; replays are idempotent.

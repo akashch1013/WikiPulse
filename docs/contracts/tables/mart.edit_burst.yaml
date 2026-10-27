@@ -1,0 +1,60 @@
+name: mart.edit_burst
+store: postgres:mart
+owner_workstream: WS-transform
+grain: One row per (wiki_id, page_id, window_start) detected edit burst.
+primary_key:
+- wiki_id
+- page_id
+- window_start
+partitioning: none (small)
+indexes:
+- (wiki_id, window_start DESC, page_id)
+freshness_sla: Published within 15 minutes of the gold build
+columns:
+- name: wiki_id
+  type: varchar
+  nullable: false
+  description: Wiki database name, e.g. enwiki.
+- name: page_id
+  type: bigint
+  nullable: false
+  description: Page ID.
+- name: window_start
+  type: timestamptz
+  nullable: false
+  description: Start.
+- name: window_end
+  type: timestamptz
+  nullable: false
+  description: End.
+- name: title
+  type: text
+  nullable: false
+  description: Title at start.
+- name: namespace_id
+  type: integer
+  nullable: false
+  description: Namespace.
+- name: edits
+  type: integer
+  nullable: false
+  description: Edits.
+- name: distinct_editors
+  type: integer
+  nullable: false
+  description: Editors.
+- name: baseline_rate_per_hour
+  type: double precision
+  nullable: false
+  description: Baseline.
+- name: poisson_p
+  type: double precision
+  nullable: false
+  description: Tail probability.
+- name: reverts
+  type: integer
+  nullable: false
+  description: Reverts.
+tests:
+  reconciliation: Row count and sum of measures per published partition equal gold.fct_edit_burst for the same partition.
+notes: Published from gold.fct_edit_burst by delete+insert per partition in one transaction.

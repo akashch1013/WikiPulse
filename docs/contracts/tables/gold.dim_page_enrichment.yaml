@@ -1,0 +1,50 @@
+name: gold.dim_page_enrichment
+store: lake:gold
+owner_workstream: WS-transform
+grain: One row per (wiki_id, page_id) that has been enriched.
+primary_key:
+- wiki_id
+- page_id
+partitioning: wiki_id
+sort_order:
+- wiki_id
+- page_id
+freshness_sla: Daily
+columns:
+- name: wiki_id
+  type: varchar
+  nullable: false
+  description: Wiki database name, e.g. enwiki.
+- name: page_id
+  type: bigint
+  nullable: false
+  description: Page ID.
+- name: wikibase_item_id
+  type: varchar
+  nullable: true
+  description: Wikidata item.
+- name: instance_of_qids
+  type: varchar[]
+  nullable: true
+  description: Wikidata P31 values.
+- name: instance_of_label
+  type: varchar
+  nullable: true
+  description: English label of the first P31 value.
+- name: category_count
+  type: integer
+  nullable: true
+  description: Visible categories.
+- name: enriched_at
+  type: timestamptz
+  nullable: false
+  description: Fetch time.
+tests:
+  unique:
+  - - wiki_id
+    - page_id
+  relationships:
+  - column:
+    - wiki_id
+    - page_id
+    to: gold.dim_page (is_current)

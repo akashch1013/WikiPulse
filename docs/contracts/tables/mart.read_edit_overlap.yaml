@@ -1,0 +1,57 @@
+name: mart.read_edit_overlap
+store: postgres:mart
+owner_workstream: WS-transform
+grain: One row per (wiki_id, page_id, trending_hour, burst_window_start).
+primary_key:
+- wiki_id
+- page_id
+- trending_hour
+- burst_window_start
+partitioning: none (small)
+indexes:
+- (wiki_id, trending_hour DESC, page_id)
+freshness_sla: Published within 15 minutes of the gold build
+columns:
+- name: wiki_id
+  type: varchar
+  nullable: false
+  description: Wiki database name, e.g. enwiki.
+- name: page_id
+  type: bigint
+  nullable: false
+  description: Page ID.
+- name: trending_hour
+  type: timestamptz
+  nullable: false
+  description: Trending hour.
+- name: burst_window_start
+  type: timestamptz
+  nullable: false
+  description: Burst start.
+- name: title
+  type: text
+  nullable: false
+  description: Title.
+- name: namespace_id
+  type: integer
+  nullable: false
+  description: Namespace.
+- name: lead_minutes
+  type: integer
+  nullable: false
+  description: Burst minus trending hour, minutes.
+- name: views
+  type: bigint
+  nullable: false
+  description: Views.
+- name: robust_z
+  type: double precision
+  nullable: false
+  description: Score.
+- name: burst_edits
+  type: integer
+  nullable: false
+  description: Edits.
+tests:
+  reconciliation: Row count and sum of measures per published partition equal gold.fct_read_edit_overlap for the same partition.
+notes: Published from gold.fct_read_edit_overlap by delete+insert per partition in one transaction.

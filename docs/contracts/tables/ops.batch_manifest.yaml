@@ -1,0 +1,82 @@
+name: ops.batch_manifest
+store: postgres:ops
+owner_workstream: WS-db
+grain: 'One row per (source, url): the load state of one source file or file part.'
+primary_key:
+- source
+- url
+partitioning: none
+indexes:
+- (source, status)
+- (source, partition_key)
+freshness_sla: n/a
+columns:
+- name: source
+  type: text
+  nullable: false
+  description: pageviews_hourly, page_snapshot_xml, mediawiki_history, pageview_complete_daily, eval_labels.
+- name: url
+  type: text
+  nullable: false
+  description: Source URL.
+- name: partition_key
+  type: text
+  nullable: false
+  description: Orchestrator partition, e.g. 2026-10-27T12.
+- name: etag
+  type: text
+  nullable: true
+  description: HTTP ETag at load.
+- name: last_modified
+  type: timestamptz
+  nullable: true
+  description: HTTP Last-Modified at load.
+- name: size_bytes
+  type: bigint
+  nullable: true
+  description: Content-Length.
+- name: checksum
+  type: text
+  nullable: true
+  description: md5 (XML, verified) or sha256 computed while streaming.
+- name: status
+  type: text
+  nullable: false
+  description: pending, loading, loaded, failed, superseded.
+- name: rows_in
+  type: bigint
+  nullable: true
+  description: Lines read.
+- name: rows_out
+  type: bigint
+  nullable: true
+  description: Rows written.
+- name: attempts
+  type: integer
+  nullable: false
+  description: Load attempts.
+- name: last_error
+  type: text
+  nullable: true
+  description: Last failure.
+- name: run_id
+  type: text
+  nullable: true
+  description: Run.
+- name: loaded_at
+  type: timestamptz
+  nullable: true
+  description: Completion time.
+- name: updated_at
+  type: timestamptz
+  nullable: false
+  description: Row update time.
+tests:
+  accepted_values:
+    status:
+    - pending
+    - loading
+    - loaded
+    - failed
+    - superseded
+notes: A changed etag/size/last_modified on a loaded file marks it superseded and enqueues a reload of its partition.

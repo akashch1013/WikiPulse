@@ -1,0 +1,64 @@
+name: gold.fct_wiki_activity_hourly
+store: lake:gold
+owner_workstream: WS-transform
+grain: One row per (wiki_id, hour_utc, editor_type), all wikis, authoritative batch recompute.
+primary_key:
+- wiki_id
+- hour_utc
+- editor_type
+partitioning: hour_date
+sort_order:
+- hour_utc
+- wiki_id
+freshness_sla: 15 minutes after hour end + batch run
+columns:
+- name: wiki_id
+  type: varchar
+  nullable: false
+  description: Wiki database name, e.g. enwiki.
+- name: hour_utc
+  type: timestamptz
+  nullable: false
+  description: Hour start.
+- name: hour_date
+  type: date
+  nullable: false
+  description: Partition column.
+- name: editor_type
+  type: varchar
+  nullable: false
+  description: Editor type.
+- name: edits
+  type: bigint
+  nullable: false
+  description: Edits.
+- name: creates
+  type: bigint
+  nullable: false
+  description: Page creations.
+- name: moves
+  type: bigint
+  nullable: false
+  description: Moves.
+- name: deletes
+  type: bigint
+  nullable: false
+  description: Deletions.
+- name: reverts
+  type: bigint
+  nullable: false
+  description: Reverts.
+- name: distinct_pages
+  type: bigint
+  nullable: false
+  description: Distinct pages changed.
+- name: distinct_editors
+  type: bigint
+  nullable: false
+  description: Distinct editor_key.
+tests:
+  unique:
+  - - wiki_id
+    - hour_utc
+    - editor_type
+  reconciliation: 'Per wiki-hour vs sum of stream.wiki_activity_minute: |diff| <= late + duplicate counts for that hour.'

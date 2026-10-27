@@ -1,0 +1,68 @@
+name: bronze.pageview_complete_daily
+store: lake:bronze
+owner_workstream: WS-batch
+grain: One row per line of a pageview_complete daily user file for the focus wikis on reconciliation sample days.
+primary_key:
+- source_file
+- line_number
+partitioning: day
+sort_order:
+- day
+- wiki_code
+- page_id
+freshness_sla: Sample days loaded within 1 day of publication
+columns:
+- name: day
+  type: date
+  nullable: false
+  description: Day from file name.
+- name: wiki_code
+  type: varchar
+  nullable: false
+  description: e.g. en.wikipedia.
+- name: page_title
+  type: varchar
+  nullable: false
+  description: Title.
+- name: page_id
+  type: bigint
+  nullable: true
+  description: Page ID; null when upstream emitted 'null'.
+- name: access_method
+  type: varchar
+  nullable: false
+  description: desktop, mobile-web or mobile-app.
+- name: daily_views
+  type: bigint
+  nullable: false
+  description: Daily total.
+- name: hourly_counts
+  type: varchar
+  nullable: false
+  description: Encoded hourly string (A=00 .. X=23).
+- name: line_number
+  type: bigint
+  nullable: false
+  description: Line number.
+- name: source_file
+  type: varchar
+  nullable: false
+  description: Source file URL or Kafka topic/partition/offset range the row came from.
+- name: loaded_at
+  type: timestamptz
+  nullable: false
+  description: Time the row was written (UTC).
+- name: run_id
+  type: varchar
+  nullable: false
+  description: Orchestrator run or sink batch identifier.
+tests:
+  not_null:
+  - day
+  - wiki_code
+  - daily_views
+  accepted_values:
+    access_method:
+    - desktop
+    - mobile-web
+    - mobile-app

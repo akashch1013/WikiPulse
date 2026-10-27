@@ -1,0 +1,64 @@
+name: mart.trending_hourly
+store: postgres:mart
+owner_workstream: WS-transform
+grain: One row per (wiki_id, page_id, hour_utc) with is_trending or rank_in_wiki_hour <= 500.
+primary_key:
+- wiki_id
+- page_id
+- hour_utc
+partitioning: range by month on hour_utc
+indexes:
+- (wiki_id, hour_utc, robust_z DESC, page_id)
+freshness_sla: Published within 15 minutes of the gold build
+columns:
+- name: wiki_id
+  type: varchar
+  nullable: false
+  description: Wiki database name, e.g. enwiki.
+- name: page_id
+  type: bigint
+  nullable: false
+  description: Page ID.
+- name: hour_utc
+  type: timestamptz
+  nullable: false
+  description: Hour.
+- name: title
+  type: text
+  nullable: false
+  description: Title at that hour.
+- name: namespace_id
+  type: integer
+  nullable: false
+  description: Namespace.
+- name: views
+  type: bigint
+  nullable: false
+  description: Views.
+- name: baseline_median
+  type: double precision
+  nullable: false
+  description: Baseline median.
+- name: baseline_mad
+  type: double precision
+  nullable: false
+  description: Baseline MAD.
+- name: robust_z
+  type: double precision
+  nullable: false
+  description: Score.
+- name: ratio
+  type: double precision
+  nullable: false
+  description: views / (median + 1).
+- name: rank_in_wiki_hour
+  type: integer
+  nullable: false
+  description: Rank.
+- name: is_trending
+  type: boolean
+  nullable: false
+  description: Detection flag.
+tests:
+  reconciliation: Row count and sum of measures per published partition equal gold.fct_trending_hourly for the same partition.
+notes: Published from gold.fct_trending_hourly by delete+insert per partition in one transaction.
