@@ -128,7 +128,8 @@ one join away (`mart.page_current`), and `mart.page_title_history` exposes the v
 
 Hourly pageview rows carry titles only. Resolution for row (domain code, title, hour):
 
-1. Map the domain code to `wiki_id` and `access_method` (`en` → enwiki/desktop, `en.m` → enwiki/mobile-web, and
+1. Set `hour_utc` to the file's timestamp minus one hour (the filename marks the end of the hour). Map the domain
+   code to `wiki_id` and `access_method` (`en` → enwiki/desktop, `en.m` → enwiki/mobile-web, and
    likewise for de).
 2. Normalise the title:
    - percent-decode once (invalid sequences are kept as-is)
@@ -140,7 +141,9 @@ Hourly pageview rows carry titles only. Resolution for row (domain code, title, 
 4. If that version is a redirect, attribute the views to `redirect_target_page_id` and add them to
    `via_redirect_views` as well. Only one hop is followed, because MediaWiki does not follow double redirects
    either.
-5. Rows that do not resolve go to `silver.pageviews_unresolved`. Expected causes are nonexistent titles, special
+5. Pages in the User (2) and User talk (3) namespaces are dropped after resolution and counted only in wiki-level
+   totals: their titles are usernames, and WikiPulse keeps no per-person output.
+6. Rows that do not resolve go to `silver.pageviews_unresolved`. Expected causes are nonexistent titles, special
    pages, malformed requests, and pages created after the last snapshot that have no lifecycle event in the
    stream yet. The row keeps its views, and the resolution is retried for the 48 hours after each new snapshot or
    stream window.

@@ -8,7 +8,7 @@ The project needs two dashboards:
   type, plus visible data freshness
 - an ops dashboard: consumer lag, freshness, DLQ and late rates, manifest status
 
-The local memory budget leaves about 256 MB for a dashboard. On Azure it should scale to zero.
+The local memory budget leaves about 384 MB for a dashboard (Grafana 13.2.5 measured 244 MB idle). On Azure it should scale to zero.
 
 ## Decision
 Use Grafana OSS 13.3.x with provisioned dashboards stored as JSON in `dashboards/grafana/` and a Postgres

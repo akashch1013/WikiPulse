@@ -20,7 +20,7 @@ Access policy references:
 | Schema | `mediawiki/page/change` 1.12.0, https://schema.wikimedia.org/repositories/primary/jsonschema/mediawiki/page/change/ |
 | Frequency | continuous; 17.25 events/s measured, 2,775 B mean |
 | Licence | Event metadata is published by the Wikimedia Foundation with the projects' content. Page titles and edit metadata derive from CC BY-SA content; WikiPulse stores titles and numeric metadata only. |
-| Access rules | no documented rate or connection limit; no server-side filtering, so clients consume the whole stream. The service enforces a 15-minute connection timeout. |
+| Access rules | no documented rate or connection limit; no server-side filtering, so clients consume the whole stream. The service documents a 15-minute connection timeout; observed sessions on 2026-10-28 ended after about 2.3 minutes. |
 | Resume | `Last-Event-ID` header with the last `id:` array; `?since=<epoch ms or ISO>` is ignored when `Last-Event-ID` is set, and silently ignored if no offset exists for that time. Retention is 7 to 31 days, depending on the stream. |
 
 Fields used by WikiPulse are listed in `docs/contracts/events/upstream-page-change-1.12.0.subset.json`:
@@ -79,9 +79,11 @@ Known data issues:
 - No checksums are published. The manifest records size, Last-Modified, and a SHA-256 computed on download.
 - **Files are republished.** The 2026-06-20 01:00 to 04:00 hours were rewritten on 2026-10-27. The manifest
   detects changed size or mtime and reloads the partition.
-- Some lines have a literal `""` domain code. They are counted and excluded, since they map to no wiki.
-- The filename timestamp is documented as the end of the covered hour. WikiPulse verifies this against
-  `pageview_complete` hourly letters during the build and records the result here.
+- Some lines have a literal `""` domain code (572 of 6,215,561 lines in the 2026-10-26 11:00 hour). They are
+  counted and excluded, since they map to no wiki.
+- The filename timestamp is the end of the covered hour. Verified 2026-10-28: `pageviews-20261026-120000`
+  matched the 11:00 hourly count in `pageview_complete` for 250 of 251 desktop titles, and 12:00 for 33 of 955
+  compared rows. WikiPulse sets `hour_utc` to the filename time minus one hour.
 - Known historical anomaly: T141506 (Chrome 41 Main_Page spike, 2016). It is outside the coverage window.
 
 ### Daily: `pageview_complete`
@@ -98,7 +100,8 @@ Known data issues:
 
 Known issues:
 
-- `page_id` is the literal `null` when unknown. The readme notes that such rows may have 5 columns instead of 6;
+- `page_id` is the literal `null` when unknown. One title can appear under several page_ids, so comparisons with
+  the hourly files sum per title. The hourly letter counts sum to `daily_total` on every sampled row. The readme notes that such rows may have 5 columns instead of 6;
   the parser accepts both.
 - Spider files stopped after 2023-03-12.
 

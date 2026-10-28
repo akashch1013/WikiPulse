@@ -70,7 +70,9 @@ PostgreSQL holds only the marts the API and dashboard read.
    - produces to `wikipulse.page_change.v1` with key `<wiki_id>:<page_id>` (idempotent producer, `acks=all`)
 3. Every 5 s or 500 events, ingest calls `producer.flush()` and then writes the newest SSE id to
    `ops.stream_checkpoint`. The checkpoint never runs ahead of acknowledged messages.
-4. EventStreams closes connections after 15 minutes. On any disconnect, ingest reconnects with
+4. EventStreams documents a 15-minute connection timeout; during the fixture capture on 2026-10-28 the server
+   closed connections cleanly after about 2.3 minutes, 9 times in 21 minutes. Reconnecting is the normal path,
+   not an error path. On any disconnect, ingest reconnects with
    `Last-Event-ID` set to the last checkpoint, using exponential backoff with jitter (1 s to 60 s). Events
    between the checkpoint and the disconnect are delivered again; the stream processor removes them.
 5. If the process has been down longer than upstream retention (7 to 31 days, depending on the stream), resume
@@ -165,7 +167,7 @@ support them, and keeping one code path is worth more than exactly-once locally.
 
 | Failure | Detection | Handling |
 |---|---|---|
-| SSE disconnect (including the 15-min server timeout) | stream EOF or error | reconnect with `Last-Event-ID`; duplicates removed downstream |
+| SSE disconnect (server closes sessions every few minutes) | stream EOF or error | reconnect with `Last-Event-ID`; duplicates removed downstream |
 | ingest crash | container restart; `ingest_last_event_age_seconds` | resume from `ops.stream_checkpoint` |
 | Outage longer than upstream retention | checkpoint timestamp older than the first event received | row in `ops.stream_gaps`; backfill from History TSV |
 | Malformed or invalid event | schema validation | DLQ with `reason_code`, original payload, schema version |
@@ -199,6 +201,8 @@ accounts. WikiPulse keeps no per-person data and publishes no per-person output.
     before temporary accounts; no IP editors were seen in the live stream.
   - `registered`: everything else
 - MediaWiki History TSV usernames and IPs are dropped while parsing; only the HMAC key and `editor_type` remain.
+- Titles of pages in the User (2) and User talk (3) namespaces are usernames. Those pages are excluded from
+  page-level silver, gold and serving tables, so they contribute to wiki-level counts only.
 - No article text is stored. The XML parser skips `<text>` content and reads only its `bytes` and `sha1`
   attributes.
 - The API and dashboard show page-level and wiki-level aggregates only. No endpoint accepts or returns an editor
@@ -238,7 +242,8 @@ result here.
 
 | Source | Measurement |
 |---|---|
-| EventStreams `mediawiki.page_change.v1` (schema 1.12.0) | 17.25 events/s over 90 s; 2,775 B mean raw JSON; about 48 KB/s, 1.49M events/day, 4.1 GB/day raw. 40.8% bot, 3.1% temporary accounts, 0 IP editors. Kinds in sample: edit 81%, create 18%, delete 0.5%, move 0.3%. 0 duplicate `meta.id` in 735 events. |
+| EventStreams `mediawiki.page_change.v1` (schema 1.12.0) | 17.25 events/s over 90 s; 2,775 B mean raw JSON; about 48 KB/s, 1.49M events/day, 4.1 GB/day raw. 40.8% bot, 3.1% temporary accounts, 0 IP editors. Kinds in sample: edit 81%, create 18%, delete 0.5%, move 0.3%. 0 duplicate `meta.id` in 735 events. A second capture at 03:00 to 03:21 UTC on 2026-10-28 ran at 1.6 events/s, so the
+daily range is wide; the 24 h measurement (M3-05) sets the sizing figure. |
 | EventStreams `recentchange` (reference, not ingested) | 34.9 events/s over 120 s; 1,358 B mean; 49% `categorize`. No `page_id`. Delivery lag p50 4.9 s, p99 23.3 s, max 14.9 years (old timestamps on categorize/log events). |
 | Pageviews hourly, September 2026 | 720 files; median 61.0 MB gzip (min 44.6, max 80.4); 1.34 to 1.65 GB per day; 43.1 GB per month. |
 | One pageview hour (2026-10-27 12:00) | 52.2 MB gzip, 184.9 MB uncompressed, 5.94M lines, 1,756 domain codes, 16.1M views. Download and parse took 72 s, limited by the download. |
@@ -276,10 +281,10 @@ because its XML is 1.09 GB against 7.85 GB for enwiki. See ADR 0009.
 | dagster-webserver | 384 MB |
 | dagster-daemon (runs launched in-process) | 1.25 GB |
 | api | 128 MB |
-| grafana (13.x) | 256 MB |
+| grafana (13.2.5; measured 244 MB idle) | 384 MB |
 | prometheus | 192 MB |
 
-Planned steady state is about 2.6 GB, with a peak of about 4.0 GB during dbt and backfills; the build measures
+Planned steady state is about 2.7 GB, with a peak of about 4.0 GB during dbt and backfills; the build measures
 both.
 
 Storage placement (ADR 0013):
