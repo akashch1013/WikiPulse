@@ -1,0 +1,154 @@
+# WikiPulse configuration (non-secret). Any key can be overridden with an environment variable
+# WIKIPULSE_<SECTION>__<KEY>, e.g. WIKIPULSE_HTTP__CONTACT or WIKIPULSE_DETECTION__TRENDING__MIN_RATIO.
+# Values only the operator provides (User-Agent contact, data root, secrets) belong in .env, see .env.example.
+
+[http]
+contact = ""                      # required: email or URL sent in every User-Agent (WIKIPULSE_HTTP__CONTACT)
+product = "WikiPulse"
+timeout_seconds = 30
+max_attempts = 5
+backoff_base_seconds = 1.0
+backoff_max_seconds = 60.0
+min_retry_after_seconds = 5.0     # floor when a 429/503 carries no Retry-After
+maxlag_seconds = 5                # MediaWiki Action API maxlag parameter
+
+# Requests per minute per host. The 2026 Wikimedia limit for identified clients is 200/min.
+[http.rate_limits_per_minute]
+"en.wikipedia.org" = 150
+"de.wikipedia.org" = 150
+"www.wikidata.org" = 150
+"dumps.wikimedia.org" = 120
+
+# Concurrent connections per host. dumps.wikimedia.org allows 3 per IP.
+[http.max_connections]
+"dumps.wikimedia.org" = 3
+"en.wikipedia.org" = 1
+"de.wikipedia.org" = 1
+"www.wikidata.org" = 1
+
+[wikis]
+page_level = ["enwiki", "dewiki"]
+
+# Pageview dump domain codes per wiki and access method.
+[wikis.pageview_codes.enwiki]
+desktop = "en"
+mobile-web = "en.m"
+
+[wikis.pageview_codes.dewiki]
+desktop = "de"
+mobile-web = "de.m"
+
+[stream]
+url = "https://stream.wikimedia.org/v2/stream/mediawiki.page_change.v1"
+topic = "wikipulse.page_change.v1"
+dlq_topic = "wikipulse.page_change.dlq.v1"
+late_topic = "wikipulse.page_change.late.v1"
+partitions = 4
+checkpoint_interval_seconds = 5
+checkpoint_interval_events = 500
+reconnect_backoff_min_seconds = 1.0
+reconnect_backoff_max_seconds = 60.0
+future_tolerance_seconds = 600    # events more than this ahead of processing time go to the DLQ
+max_payload_bytes = 900000
+
+[kafka]
+profile = "local"                 # local | eventhubs
+bootstrap_servers = "localhost:9092"
+eventhubs_namespace = ""          # <namespace>.servicebus.windows.net when profile = eventhubs
+compression = "zstd"              # Event Hubs Standard does not support compression; the eventhubs profile forces none
+retention_hours = 72
+
+[windows]
+wiki_window_seconds = 60
+page_window_seconds = 3600
+page_window_step_seconds = 300
+grace_seconds = 300
+dedup_ttl_hours = 24
+
+[postgres]
+host = "localhost"
+port = 55432                       # host port of the compose PostgreSQL; containers use postgres:5432
+database = "wikipulse"
+catalog_database = "lakehouse_catalog"
+user = "wikipulse"
+password = ""                     # .env locally; Entra token on Azure
+reader_user = "wikipulse_reader"
+reader_password = ""
+auth = "password"                 # password | entra
+pool_min_size = 1
+pool_max_size = 5
+
+[lake]
+data_root = "./data"              # .env sets WIKIPULSE_LAKE__DATA_ROOT; containers mount it at /data
+azure_account = ""                # storage account name when the lake is on ADLS Gen2
+azure_container = "lake"
+raw_retention_days = 60
+duckdb_memory_limit = "1GB"
+duckdb_threads = 2
+duckdb_temp_directory = "/tmp/wikipulse-duckdb-spill"
+duckdb_max_temp_directory_size = "4GB"
+
+[batch]
+profile = "full"                  # full | quick
+dumps_base_url = "https://dumps.wikimedia.org"
+pageviews_path = "/other/pageviews"
+pageview_complete_path = "/other/pageview_complete"
+history_path = "/other/mediawiki_history"
+history_months = 3
+republication_sweep_days = 35
+reconciliation_weekday = 2        # ISO weekday (1 = Monday) of the pageview_complete reconciliation day
+row_group_size = 1000000
+
+[batch.profiles.full]
+backfill_days = 35
+
+[batch.profiles.quick]
+backfill_days = 8
+
+[enrichment]
+cache_ttl_days = 7
+ids_per_request = 50
+
+[detection.trending]
+baseline_hours = 168
+min_robust_z = 8.0
+min_ratio = 3.0
+
+[detection.trending.view_floor]
+enwiki = 300
+dewiki = 100
+
+[detection.edit_burst]
+window_minutes = 60
+step_minutes = 5
+baseline_days = 28
+max_p_value = 1e-4
+min_edits = 5
+min_distinct_editors = 3
+min_rate_per_hour = 0.005952      # one edit per week
+
+[evaluation]
+wiki = "enwiki"
+top_k = 20
+label_day_radius = 1
+
+[freshness]
+stream_max_lag_seconds = 300
+pageviews_max_lag_hours = 6
+snapshot_max_age_days = 40
+history_max_age_days = 45
+
+[api]
+default_page_size = 50
+max_page_size = 500
+max_range_hours_hourly = 744
+max_range_hours_minute = 48
+
+[telemetry]
+exporter = "otlp"                 # otlp | azure_monitor | none
+otlp_endpoint = "http://localhost:9090/api/v1/otlp/v1/metrics"
+export_interval_seconds = 15
+log_level = "INFO"
+
+[privacy]
+hmac_key = ""                     # 64 hex characters; .env locally, Key Vault on Azure

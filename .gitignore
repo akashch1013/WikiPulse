@@ -1,0 +1,12 @@
+.env
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+/data/
+transform/target/
+transform/logs/
+transform/dbt_packages/
+infra/terraform/.terraform/
+infra/terraform/*.tfstate*
