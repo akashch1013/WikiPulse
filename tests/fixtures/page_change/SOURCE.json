@@ -1,0 +1,23 @@
+{
+  "url": "https://stream.wikimedia.org/v2/stream/mediawiki.page_change.v1",
+  "user_agent": "WikiPulse/0.1 (akashchaudhari1012@gmail.com) fixture-capture",
+  "captured_from": "2026-10-28T03:00:04Z",
+  "captured_to": "2026-10-28T03:20:49Z",
+  "event_count": 2000,
+  "line_format": "{\"sse_id\": <SSE id: line, verbatim>, \"event\": <SSE data: JSON object>}",
+  "schema_versions": {
+    "/mediawiki/page/change/1.12.0": 2000
+  },
+  "transformation": [
+    "performer.user_text, revision.editor.user_text, prior_state.revision.editor.user_text: replaced with consistent placeholders by shape class (registered -> FixtureUser<N>; temporary account ~YYYY-NNNNN-NN -> ~YYYY-<N 5 digits>-<N mod 100>, year kept; IP address -> 192.0.2.<N>, none present)",
+    "performer.user_id, revision.editor.user_id, prior_state.revision.editor.user_id: non-zero values remapped per (wiki_id, user_id) to consistent integers from 1000001",
+    "performer.user_central_id, revision.editor.user_central_id, prior_state.revision.editor.user_central_id: non-zero values remapped to consistent integers from 2000001",
+    "comment, revision.comment, prior_state.revision.comment: replaced with 'fixture comment <N>', consistent per distinct original value",
+    "page_title of page, page.redirect_page_link, prior_state.page and created_redirect_page when namespace_id is 2 (User) or 3 (User talk): the user name after the localised namespace prefix is replaced with the same placeholder as that user's user_text (a new FixtureUser<N> when the name is not an editor in the capture); the prefix and subpage suffix are kept, except that known user names inside the subpage suffix are also replaced",
+    "meta.uri: the title part is re-encoded from the replaced page_title when it pointed at a replaced title",
+    "performer and editor edit_count, registration_dt, first_edit_dt and groups are kept as captured: they are input the ingest service must drop",
+    "all other fields verbatim; the same original value always maps to the same placeholder, so distinct-editor counts are preserved"
+  ],
+  "sha256": "ee6fcea8dd4aacf577847560afaff2260dff34531ae582b713dc48aba6e5b6e6",
+  "capture_notes": "9 connections; the server closed each after about 2.3 minutes and the capture resumed with Last-Event-ID. Events replayed across a reconnect were kept once (by meta.id). 2 canary events (examplewiki) arrived and are kept."
+}

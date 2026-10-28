@@ -1,0 +1,15 @@
+{
+  "schemas": [
+    {
+      "path": "mediawiki/page/change/1.12.0.json",
+      "source_url": "https://schema.wikimedia.org/repositories/primary/jsonschema/mediawiki/page/change/1.12.0",
+      "also_published_as": "https://schema.wikimedia.org/repositories/primary/jsonschema/mediawiki/page/change/latest",
+      "fetched_at": "2026-10-27T19:49:50Z",
+      "published_format": "yaml (fully materialized)",
+      "published_sha256": "afc5dbad7f3fcbcaa2d60fb5e52d1e492a12a4bf089a27159522f5ce10cedc60",
+      "conversion": "parsed as YAML (timestamps left as strings) and serialized as JSON; no content edits",
+      "sha256": "bc9a801bbc6caac044b2eadafc7271b2b76a8f879ebf78154fd5998453faaf88"
+    }
+  ],
+  "versions_listed_at_fetch": "1.0.0 to 1.12.0; 1.12.0 is latest"
+}
