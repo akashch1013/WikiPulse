@@ -187,6 +187,8 @@ def test_freshness_view_reports_every_dataset(conn):
 
 def test_freshness_view_parses_manifest_partition_keys(conn):
     with conn.transaction(force_rollback=True):
+        # Rolled back afterwards; clearing first keeps the test independent of real loads in the database.
+        conn.execute("DELETE FROM ops.batch_manifest")
         conn.execute(
             """
             INSERT INTO ops.batch_manifest (source, url, partition_key, status) VALUES
