@@ -3,7 +3,16 @@ name = "wikipulse-orchestration"
 version = "0.1.0"
 description = "Dagster batch assets for WikiPulse"
 requires-python = ">=3.12,<3.13"
-dependencies = ["wikipulse-common"]
+dependencies = [
+    "dagster==1.13.27",
+    "dagster-dbt==0.29.27",
+    "dagster-postgres==0.29.27",
+    "dagster-webserver==1.13.27",
+    "dbt-core==1.12.6",
+    "dbt-duckdb==1.11.1",
+    "psycopg[binary]==3.3.6",
+    "wikipulse-common",
+]
 
 [build-system]
 requires = ["uv_build>=0.12.5,<0.13"]

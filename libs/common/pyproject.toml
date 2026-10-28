@@ -4,10 +4,11 @@ version = "0.1.0"
 description = "Shared configuration, logging, HTTP, Kafka and telemetry code for WikiPulse services"
 requires-python = ">=3.12,<3.13"
 dependencies = [
+    "duckdb==2.0.0",
     "httpx==0.28.1",
     "opentelemetry-exporter-otlp-proto-http==1.45.1",
     "opentelemetry-sdk==1.45.1",
-    "pydantic-settings==2.16.1",
+    "pydantic-settings==2.15.0",
 ]
 
 [build-system]
