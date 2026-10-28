@@ -17,6 +17,9 @@ dev = [
     "jsonschema",
     "psycopg[binary]",
 ]
+docs = [
+    "zensical==0.0.73",
+]
 
 [tool.ruff]
 line-length = 110

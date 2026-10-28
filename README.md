@@ -1,23 +1,73 @@
 # WikiPulse
 
-WikiPulse captures live editing activity across Wikimedia projects, joins it with hourly pageview data, and
-serves activity, read-surge and edit-burst analytics through a REST API and a Grafana dashboard.
+WikiPulse is a data platform for exploring Wikimedia editing activity alongside pageviews. It brings together a live stream of page changes and public Wikimedia datasets to support activity, trending, and edit-burst analytics.
 
-Inputs, all public Wikimedia data:
+The project is **under development**. The repository contains ingestion, streaming, batch orchestration, transformations, API and dashboard components; the [build plan](docs/plan.md) describes the remaining milestones and acceptance criteria.
 
-- Wikimedia EventStreams `mediawiki.page_change.v1` (Server-Sent Events, about 17 events/s across all wikis)
-- Hourly pageview dumps (about 1.4 GB compressed per day)
-- MediaWiki `stub-meta-current` XML dumps and MediaWiki History TSV dumps for enwiki and dewiki
-- The MediaWiki Action API and Wikidata, for page enrichment
+## How it works
 
-The platform runs locally with Docker Compose and on Azure (Event Hubs Kafka endpoint, ADLS Gen2, Container Apps,
-PostgreSQL Flexible Server).
+Wikimedia EventStreams supplies page changes; hourly pageview dumps and MediaWiki snapshots supply batch data. Kafka carries the stream, Dagster orchestrates batch work, and DuckLake and dbt support storage and transformation. PostgreSQL serves data to the API and Grafana. The design also covers an Azure deployment.
 
-Status: design complete, build not started. The design is in:
+Read the [architecture](docs/architecture.md), [data model](docs/data-model.md), and [source documentation](docs/sources.md) for details and limitations.
 
-- [docs/architecture.md](docs/architecture.md): components, data flow, delivery semantics, measured volumes, cost
-- [docs/data-model.md](docs/data-model.md): layers, star schema, analytic definitions and their evaluation
-- [docs/sources.md](docs/sources.md): sources, formats, licences, known data issues
-- [docs/decisions/](docs/decisions/): architecture decision records
-- [docs/contracts/](docs/contracts/): event schemas, table contracts, OpenAPI specification
-- [docs/plan.md](docs/plan.md): build milestones and workstreams
+## Get started
+
+You need Python 3.12, [uv](https://docs.astral.sh/uv/), Docker with Compose, and Make. The base stack downloads container images on its first run.
+
+1. Clone the repository and install the Python workspace:
+
+   ```bash
+   git clone https://github.com/akashch1013/WikiPulse.git
+   cd WikiPulse
+   make sync
+   ```
+
+2. Create a local configuration and fill in the values described in the file:
+
+   ```bash
+   cp .env.example .env
+   ```
+
+   Set a Wikimedia contact, a writable lake data directory, the PostgreSQL and Grafana passwords, and a 64-character hexadecimal HMAC key. Generate a key with `python3 -c "import secrets; print(secrets.token_hex(32))"`. Keep `.env` private. The lake path must meet the mount requirements described in [the storage decision](docs/decisions/0013-local-storage-placement.md).
+
+3. Start the base services and apply database migrations:
+
+   ```bash
+   make up-base
+   make ps-healthy
+   make db-migrate
+   ```
+
+   Grafana is available at [localhost:3000](http://localhost:3000) and Prometheus at [localhost:9090](http://localhost:9090). The base stack starts infrastructure only; see the [build plan](docs/plan.md) for the status of the end-to-end pipeline.
+
+4. Stop the stack when finished:
+
+   ```bash
+   make down
+   ```
+
+   Named volumes are retained.
+
+## Development
+
+```bash
+make help             # List available commands
+make lint             # Check lint and formatting
+make test             # Run workspace unit and contract tests
+make contracts-check  # Validate contracts, including OpenAPI (requires Docker)
+```
+
+The workspace is organized into `services/` (ingestion, stream processing and API), `orchestration/` (Dagster), `transform/` (dbt), `libs/common/`, `migrations/`, and `dashboards/`. Configuration lives in `config/` and `.env`.
+
+## Documentation
+
+The [documentation site](https://akashch1013.github.io/WikiPulse/) contains the architecture, data model, sources, build plan and decisions. The repository also contains [event and table contracts and the OpenAPI specification](docs/contracts/).
+
+To build the documentation locally:
+
+```bash
+uv sync --frozen --only-group docs
+uv run --frozen --only-group docs zensical build --strict --clean
+```
+
+The generated site is in `site/`. The GitHub Actions documentation workflow publishes it to GitHub Pages on changes to documentation and can also be run manually. In repository **Settings → Pages**, set the build and deployment source to **GitHub Actions** before the first deployment.

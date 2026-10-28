@@ -1,0 +1,67 @@
+[project]
+site_name = "WikiPulse"
+site_description = "Live Wikimedia edit stream and pageview analytics: architecture, data model and decisions"
+site_url = "https://akashch1013.github.io/WikiPulse/"
+repo_url = "https://github.com/akashch1013/WikiPulse"
+repo_name = "akashch1013/WikiPulse"
+edit_uri = "edit/master/docs/"
+docs_dir = "docs"
+site_dir = "site"
+nav = [
+  { "Home" = "index.md" },
+  { "Architecture" = "architecture.md" },
+  { "Data model" = "data-model.md" },
+  { "Sources" = "sources.md" },
+  { "Build plan" = "plan.md" },
+  { "Decisions" = [
+    { "0001 Stream source" = "decisions/0001-stream-source-page-change.md" },
+    { "0002 Kafka and Event Hubs" = "decisions/0002-kafka-protocol-and-event-hubs.md" },
+    { "0003 Stream processing" = "decisions/0003-stream-processing-quix-streams.md" },
+    { "0004 Lakehouse format" = "decisions/0004-lakehouse-ducklake.md" },
+    { "0005 dbt and serving" = "decisions/0005-dbt-duckdb-and-serving-publish.md" },
+    { "0006 Orchestration" = "decisions/0006-orchestration-dagster.md" },
+    { "0007 Dashboard" = "decisions/0007-dashboard-grafana.md" },
+    { "0008 Revision history source" = "decisions/0008-revision-history-source.md" },
+    { "0009 Coverage" = "decisions/0009-coverage-enwiki-dewiki.md" },
+    { "0010 Pseudonymisation" = "decisions/0010-identity-pseudonymisation.md" },
+    { "0011 Azure compute and IaC" = "decisions/0011-azure-compute-and-iac.md" },
+    { "0012 Migrations" = "decisions/0012-database-migrations-dbmate.md" },
+    { "0013 Local storage" = "decisions/0013-local-storage-placement.md" },
+  ] },
+]
+
+[project.theme]
+language = "en"
+features = [
+  "content.code.copy",
+  "navigation.footer",
+  "navigation.path",
+  "navigation.sections",
+  "navigation.top",
+  "navigation.tracking",
+  "search.highlight",
+]
+
+[[project.theme.palette]]
+media = "(prefers-color-scheme: light)"
+scheme = "default"
+toggle.icon = "lucide/moon"
+toggle.name = "Switch to dark mode"
+
+[[project.theme.palette]]
+media = "(prefers-color-scheme: dark)"
+scheme = "slate"
+toggle.icon = "lucide/sun"
+toggle.name = "Switch to light mode"
+
+[project.markdown_extensions]
+attr_list = {}
+md_in_html = {}
+tables = {}
+toc.permalink = true
+pymdownx.highlight.anchor_linenums = true
+pymdownx.highlight.pygments_lang_class = true
+pymdownx.inlinehilite = {}
+pymdownx.superfences.custom_fences = [
+  { name = "mermaid", class = "mermaid", format = "pymdownx.superfences.fence_code_format" },
+]
