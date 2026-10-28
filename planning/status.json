@@ -182,7 +182,7 @@
         "orchestration/src/wikipulse_orchestration/definitions.py"
       ],
       "depends_on": [],
-      "status": "todo",
+      "status": "done",
       "done_check": "uv sync --frozen && make help exits 0, and config/wikipulse.toml parses with python3 -c \"import tomllib; tomllib.load(open('config/wikipulse.toml','rb'))\""
     },
     {
@@ -197,7 +197,7 @@
       "depends_on": [
         "M0-01"
       ],
-      "status": "todo",
+      "status": "done",
       "done_check": "uv run pytest libs/common -q passes, including tests against a local HTTP server that returns 429 with Retry-After and 503 maxlag, and a guard test on an unmounted path"
     },
     {
@@ -213,7 +213,7 @@
         "M0-01",
         "M0-08"
       ],
-      "status": "todo",
+      "status": "done",
       "done_check": "make db-migrate && make db-rollback-check (up, down, up) exits 0 and make contracts-check-db reports no column differences against docs/contracts/tables/postgres tables"
     },
     {
@@ -238,7 +238,7 @@
       "depends_on": [
         "M0-01"
       ],
-      "status": "todo",
+      "status": "done",
       "done_check": "make up-base && make ps-healthy reports every container healthy; docker stats --no-stream shows each container under its limit"
     },
     {
@@ -254,7 +254,7 @@
       "depends_on": [
         "M0-01"
       ],
-      "status": "todo",
+      "status": "done",
       "done_check": "test -s tests/fixtures/page_change/events.jsonl && uv run pytest services/ingest -k fixtures validates every fixture against the vendored upstream schema"
     },
     {
@@ -273,7 +273,7 @@
       "depends_on": [
         "M0-01"
       ],
-      "status": "todo",
+      "status": "done",
       "done_check": "uv run pytest orchestration -k fixtures parses every fixture with zero malformed lines and checks SOURCE.json fields"
     },
     {
@@ -290,8 +290,9 @@
       "depends_on": [
         "M0-01"
       ],
-      "status": "todo",
-      "done_check": "act -j ci (or a pushed branch) runs green; the contract job fails when a table YAML is made invalid"
+      "status": "review",
+      "done_check": "act -j ci (or a pushed branch) runs green; the contract job fails when a table YAML is made invalid",
+      "note": "actionlint 1.7.12 passes; run on GitHub after the first push to confirm green"
     },
     {
       "id": "M0-08",
@@ -313,7 +314,7 @@
         "orchestration/src/wikipulse_orchestration/definitions.py"
       ],
       "depends_on": [],
-      "status": "todo",
+      "status": "done",
       "done_check": "docs/contracts validated by the M0-07 contract job; status of this task is done before any M1 task starts"
     },
     {
