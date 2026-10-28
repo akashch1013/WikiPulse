@@ -1,0 +1,18 @@
+{
+  "url": "https://dumps.wikimedia.org/dewiki/20261001/dewiki-20261001-stub-meta-current1.xml.gz",
+  "http": {
+    "etag": "\"6abe98f7-17b5075\"",
+    "last_modified": "Thu, 01 Oct 2026 17:31:35 GMT",
+    "content_length": 24858741
+  },
+  "source_md5": "32410f71744790e69c00d77f9bf7380b",
+  "captured_at": "2026-10-28T00:27:00Z",
+  "selection": {
+    "rule": "siteinfo header through the 400th </page>, closed with </mediawiki>",
+    "source_lines": 8230
+  },
+  "transformation": "<username> text replaced with Fixture-User-N, <ip> text with 192.0.2.N, <comment> text with 'Fixture comment N' (consistent mapping); ids, titles, timestamps, sha1, bytes and redirect elements unchanged",
+  "files": {
+    "dewiki-20261001-stub-meta-current1.head400.xml.gz": "3f8ba3260fda8a88929ddb03e0c590cce3d2afb2834757e1aa9568db9a641d7c"
+  }
+}

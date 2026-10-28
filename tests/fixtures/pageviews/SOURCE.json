@@ -1,0 +1,36 @@
+{
+  "url": "https://dumps.wikimedia.org/other/pageviews/2026/2026-10/pageviews-20261026-120000.gz",
+  "http": {
+    "etag": "\"6adf6ba1-34810e1\"",
+    "last_modified": "Mon, 26 Oct 2026 15:02:57 GMT",
+    "content_length": 55054561
+  },
+  "captured_at": "2026-10-28T00:36:00Z",
+  "selection": {
+    "rule": "first 12,500 lines of each domain code de, de.m, en, en.m, in source order",
+    "source_total_lines": 6215561,
+    "line_ranges": {
+      "de": [
+        383768,
+        396267
+      ],
+      "de.m": [
+        627610,
+        640109
+      ],
+      "en": [
+        876915,
+        889414
+      ],
+      "en.m": [
+        1854671,
+        1867170
+      ]
+    }
+  },
+  "transformation": "none; selected lines re-gzipped unchanged",
+  "notes": "The source file covers 11:00-12:00 UTC (filename is the end of the hour): 250 of 251 desktop titles with views in this slice equal the hour-L (11:00) count in pageview_complete for 2026-10-26. The source has 572 lines with the literal domain code \"\".",
+  "files": {
+    "pageviews-20261026-120000.slice.gz": "422404696d08eef1458867a56cd203bd5cb3fdcc1add751ac14394da9fe74590"
+  }
+}

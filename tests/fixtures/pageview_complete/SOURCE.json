@@ -1,0 +1,26 @@
+{
+  "url": "https://dumps.wikimedia.org/other/pageview_complete/2026/2026-10/pageviews-20261026-user.bz2",
+  "http": {
+    "etag": "\"6ae0197a-2745926a\"",
+    "last_modified": "Tue, 27 Oct 2026 03:24:42 GMT",
+    "content_length": 658870890
+  },
+  "captured_at": "2026-10-28T00:39:00Z",
+  "selection": {
+    "rule": "2,500 lines from the first de.wikipedia line and 2,500 from the first en.wikipedia line, in source order",
+    "line_ranges": {
+      "de.wikipedia": [
+        6324131,
+        6326630
+      ],
+      "en.wikipedia": [
+        10080325,
+        10082824
+      ]
+    }
+  },
+  "transformation": "none; selected lines re-compressed unchanged",
+  "files": {
+    "pageviews-20261026-user.slice.bz2": "e0fd128b6c4b60f5745d76c682a11363c38da149b43be0f8b46fc7470ce4fa8d"
+  }
+}

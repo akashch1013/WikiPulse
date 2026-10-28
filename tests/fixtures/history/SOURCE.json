@@ -1,0 +1,16 @@
+{
+  "url": "https://dumps.wikimedia.org/other/mediawiki_history/2026-09/dewiki/2026-09.dewiki.2026.tsv.bz2",
+  "http": {
+    "etag": "\"6ac3a7bb-285be43b\"",
+    "last_modified": "Mon, 05 Oct 2026 13:35:55 GMT",
+    "content_length": 677110843
+  },
+  "captured_at": "2026-10-28T00:30:00Z",
+  "selection": {
+    "rule": "first 10,000 lines"
+  },
+  "transformation": "event_user_text_historical, event_user_text, user_text_historical, user_text replaced with Fixture-User-N (IPs would become 192.0.2.N; none present); User and User talk page titles (namespace 2, 3) use the same mapping for the base name; event_comment replaced with 'Fixture comment N'; ids, flags and timestamps unchanged",
+  "files": {
+    "2026-09.dewiki.2026.head10000.tsv.bz2": "9e879fc8b7af6a0609ad5a18af2e15f1f3379bfb4a87b596786c4f57a48d2ca5"
+  }
+}
