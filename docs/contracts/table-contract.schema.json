@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://wikipulse.local/contracts/table-contract.schema.json",
+  "title": "WikiPulse table contract",
+  "description": "Format of every file in docs/contracts/tables/.",
+  "type": "object",
+  "required": ["name", "store", "owner_workstream", "grain", "primary_key", "partitioning", "freshness_sla", "columns", "tests"],
+  "additionalProperties": false,
+  "properties": {
+    "name": {"type": "string", "pattern": "^(bronze|silver|gold|ops|stream|enrich|mart)\\.[a-z][a-z0-9_]*$"},
+    "kind": {"enum": ["view"], "description": "Present only for views; tables omit it."},
+    "store": {"enum": ["lake:bronze", "lake:silver", "lake:gold", "postgres:ops", "postgres:stream", "postgres:enrich", "postgres:mart"]},
+    "owner_workstream": {"enum": ["WS-ingest", "WS-stream", "WS-batch", "WS-transform", "WS-serving", "WS-db"]},
+    "grain": {"type": "string", "minLength": 10},
+    "primary_key": {"type": "array", "items": {"type": "string"}, "minItems": 1, "uniqueItems": true},
+    "partitioning": {"type": "string"},
+    "sort_order": {"type": "array", "items": {"type": "string"}},
+    "indexes": {"type": "array", "items": {"type": "string"}},
+    "freshness_sla": {"type": "string"},
+    "columns": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["name", "type", "nullable", "description"],
+        "additionalProperties": false,
+        "properties": {
+          "name": {"type": "string", "pattern": "^[a-z][a-z0-9_]*$"},
+          "type": {"type": "string"},
+          "nullable": {"type": "boolean"},
+          "description": {"type": "string", "minLength": 1}
+        }
+      }
+    },
+    "tests": {"type": "object"},
+    "notes": {"type": "string"}
+  }
+}
