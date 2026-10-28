@@ -2,6 +2,8 @@
 
 WikiPulse is a data platform for exploring Wikimedia editing activity alongside pageviews. It brings together a live stream of page changes and public Wikimedia datasets to support activity, trending, and edit-burst analytics.
 
+[Documentation](https://akashch1013.github.io/WikiPulse/) · [Architecture](docs/architecture.md) · [Data model](docs/data-model.md) · [Build plan](docs/plan.md)
+
 The project is **under development**. The repository contains ingestion, streaming, batch orchestration, transformations, API and dashboard components; the [build plan](docs/plan.md) describes the remaining milestones and acceptance criteria.
 
 ## How it works

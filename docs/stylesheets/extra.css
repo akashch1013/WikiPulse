@@ -1,0 +1,41 @@
+:root {
+  --wp-accent: #087f8c;
+  --wp-border: rgba(64, 128, 140, .24);
+}
+
+[data-md-color-scheme="default"] {
+  --md-primary-fg-color: #103b4a;
+  --md-accent-fg-color: #087f8c;
+}
+
+[data-md-color-scheme="slate"] {
+  --md-primary-fg-color: #103b4a;
+  --md-accent-fg-color: #5cd3d1;
+  --wp-accent: #5cd3d1;
+  --wp-border: rgba(112, 202, 204, .25);
+}
+
+.wp-hero {
+  padding: clamp(1.6rem, 5vw, 3.2rem);
+  margin: 0 0 2.8rem;
+  border: 1px solid rgba(115, 219, 213, .3);
+  border-radius: 1rem;
+  background: radial-gradient(circle at 90% 10%, rgba(80, 201, 191, .23), transparent 36%), linear-gradient(135deg, #102f3e, #155966);
+  color: #e8f8f5;
+}
+.md-typeset .wp-hero h1 { color: #fff; font-weight: 700; letter-spacing: -.04em; line-height: 1.08; margin: .65rem 0; max-width: 15ch; }
+.wp-hero > p { max-width: 43rem; font-size: 1.05rem; line-height: 1.7; }
+.wp-eyebrow, .wp-card-label { color: var(--wp-accent); font-size: .65rem; font-weight: 700; letter-spacing: .13em; }
+.wp-hero .wp-eyebrow { color: #9ce5dc; }
+.md-typeset .wp-button { display: inline-block; padding: .65rem 1rem; margin: .4rem .45rem .4rem 0; border: 1px solid #b9e8e2; border-radius: .4rem; font-weight: 700; font-size: .76rem; }
+.md-typeset .wp-button-primary { background: #b9e8e2; color: #123d48; }
+.md-typeset .wp-button-secondary { color: #fff; }
+.md-typeset .wp-button:hover { background: #fff; color: #123d48; }
+.wp-status { display: inline-block; margin-right: .5rem; color: #a6eee0; font-weight: 700; }
+.wp-hero p:last-child { margin-bottom: 0; font-size: .72rem; }
+.wp-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr)); gap: .8rem; }
+.wp-card { padding: 1.25rem; border: 1px solid var(--wp-border); border-radius: .7rem; background: var(--md-code-bg-color); }
+.md-typeset .wp-card h3 { margin: .45rem 0; font-size: 1rem; }
+.wp-card p { margin: .5rem 0 0; line-height: 1.6; }
+.wp-flow { padding: 1rem 1.25rem; border-left: .2rem solid var(--wp-accent); border-radius: 0 .4rem .4rem 0; background: var(--md-code-bg-color); line-height: 2; }
+.wp-flow p { margin: 0; }
