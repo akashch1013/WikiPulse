@@ -10,3 +10,4 @@ transform/logs/
 transform/dbt_packages/
 infra/terraform/.terraform/
 infra/terraform/*.tfstate*
+orchestration/dagster_home/storage/
