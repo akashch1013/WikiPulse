@@ -1,0 +1,93 @@
+name: ci
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v10.3.2
+        with:
+          python-version: "3.12"
+      - run: uv sync --frozen --all-packages
+      - run: uv run ruff check .
+      - run: uv run ruff format --check .
+
+  test:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v10.3.2
+        with:
+          python-version: "3.12"
+      - run: uv sync --frozen --all-packages
+      - run: uv run pytest libs/common services/ingest orchestration -q
+
+  contracts:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v10.3.2
+        with:
+          python-version: "3.12"
+      - run: uv sync --frozen --all-packages
+      - run: uv run pytest tests/contracts -q
+      - name: Lint OpenAPI document
+        run: docker run --rm -v "$PWD/docs/contracts:/spec:ro" redocly/cli:2.0.8 lint /spec/openapi.yaml
+
+  migrations:
+    runs-on: ubuntu-24.04
+    env:
+      # Throwaway database that lives only for this job.
+      POSTGRES_PASSWORD: ci-postgres-only
+      WIKIPULSE_POSTGRES__PASSWORD: ci-wikipulse-only
+      WIKIPULSE_POSTGRES__READER_PASSWORD: ci-reader-only
+    services:
+      postgres:
+        image: postgres:18.6-bookworm
+        env:
+          POSTGRES_PASSWORD: ci-postgres-only
+          POSTGRES_USER: postgres
+          POSTGRES_DB: postgres
+        ports:
+          - 55432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v10.3.2
+        with:
+          python-version: "3.12"
+      - run: uv sync --frozen --all-packages
+      - name: Create roles and databases
+        run: >-
+          docker exec -i
+          -e POSTGRES_USER=postgres
+          -e WIKIPULSE_POSTGRES__PASSWORD
+          -e WIKIPULSE_POSTGRES__READER_PASSWORD
+          ${{ job.services.postgres.id }} sh -s < deploy/local/postgres-init/01-roles-and-databases.sh
+      - name: Migrate up, roll back every migration, migrate up again
+        run: |
+          dbmate() {
+            docker run --rm --network host -v "$PWD/migrations:/db/migrations:ro" \
+              -e DATABASE_URL="postgres://wikipulse:${WIKIPULSE_POSTGRES__PASSWORD}@127.0.0.1:55432/wikipulse?sslmode=disable" \
+              -e DBMATE_MIGRATIONS_DIR=/db/migrations -e DBMATE_NO_DUMP_SCHEMA=true amacneil/dbmate:2.37.0 "$@"
+          }
+          dbmate --wait up
+          n=$(find migrations -maxdepth 1 -name '*.sql' | wc -l)
+          for _ in $(seq "$n"); do dbmate rollback; done
+          dbmate up
+      - run: uv run pytest migrations/tests -q
