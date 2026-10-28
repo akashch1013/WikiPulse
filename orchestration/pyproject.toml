@@ -1,0 +1,13 @@
+[project]
+name = "wikipulse-orchestration"
+version = "0.1.0"
+description = "Dagster batch assets for WikiPulse"
+requires-python = ">=3.12,<3.13"
+dependencies = ["wikipulse-common"]
+
+[build-system]
+requires = ["uv_build>=0.12.5,<0.13"]
+build-backend = "uv_build"
+
+[tool.uv.sources]
+wikipulse-common = { workspace = true }
