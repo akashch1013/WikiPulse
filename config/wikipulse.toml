@@ -18,6 +18,8 @@ maxlag_seconds = 5                # MediaWiki Action API maxlag parameter
 "de.wikipedia.org" = 150
 "www.wikidata.org" = 150
 "dumps.wikimedia.org" = 120
+"stream.wikimedia.org" = 30           # SSE connection attempts
+"api.wikimedia.org" = 150
 
 # Concurrent connections per host. dumps.wikimedia.org allows 3 per IP.
 [http.max_connections]
@@ -25,6 +27,8 @@ maxlag_seconds = 5                # MediaWiki Action API maxlag parameter
 "en.wikipedia.org" = 1
 "de.wikipedia.org" = 1
 "www.wikidata.org" = 1
+"stream.wikimedia.org" = 1
+"api.wikimedia.org" = 1
 
 [wikis]
 page_level = ["enwiki", "dewiki"]
@@ -70,6 +74,7 @@ host = "localhost"
 port = 55432                       # host port of the compose PostgreSQL; containers use postgres:5432
 database = "wikipulse"
 catalog_database = "lakehouse_catalog"
+dagster_database = "dagster"
 user = "wikipulse"
 password = ""                     # .env locally; Entra token on Azure
 reader_user = "wikipulse_reader"
@@ -79,7 +84,8 @@ pool_min_size = 1
 pool_max_size = 5
 
 [lake]
-data_root = "./data"              # .env sets WIKIPULSE_LAKE__DATA_ROOT; containers mount it at /data
+data_root = "./data"              # .env sets WIKIPULSE_LAKE__DATA_ROOT; containers mount it at the same absolute path, because DuckLake records file paths
+catalog_schema = "ducklake"       # PostgreSQL schema in catalog_database holding DuckLake metadata
 azure_account = ""                # storage account name when the lake is on ADLS Gen2
 azure_container = "lake"
 raw_retention_days = 60
