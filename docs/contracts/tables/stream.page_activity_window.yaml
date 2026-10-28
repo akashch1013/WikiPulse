@@ -7,7 +7,7 @@ primary_key:
 - wiki_id
 - page_id
 - window_start
-partitioning: range by month on window_start; 3-day retention
+partitioning: range by day on window_start; 3-day retention via day-partition drop
 indexes:
 - (wiki_id, window_start, human_edits DESC)
 freshness_sla: Window end + 5 min grace + 1 min

@@ -6,7 +6,7 @@ primary_key:
 - wiki_id
 - window_start
 - editor_type
-partitioning: range by month on window_start; 7-day retention via partition drop
+partitioning: range by day on window_start; 7-day retention via day-partition drop
 indexes:
 - (wiki_id, window_start)
 - (window_start)

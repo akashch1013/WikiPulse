@@ -1,5 +1,6 @@
 name: ops.pipeline_freshness
-store: postgres:ops (view)
+store: postgres:ops
+kind: view
 owner_workstream: WS-db
 grain: 'One row per dataset: latest complete period and lag.'
 primary_key:

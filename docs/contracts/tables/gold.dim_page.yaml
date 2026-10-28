@@ -1,5 +1,6 @@
 name: gold.dim_page
-store: lake:gold (view)
+store: lake:gold
+kind: view
 owner_workstream: WS-transform
 grain: One row per version of a page (SCD type 2). A view over silver.page_versions with the same columns and grain, exposed
   as the page dimension of the star schema.

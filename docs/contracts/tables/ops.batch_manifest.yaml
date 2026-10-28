@@ -22,7 +22,7 @@ columns:
 - name: partition_key
   type: text
   nullable: false
-  description: Orchestrator partition, e.g. 2026-10-27T12.
+  description: "Orchestrator partition key, one format per source: pageviews_hourly 'YYYY-MM-DD-HH:MM' (start of the covered hour, UTC; the file named ...-120000 covers 11:00 to 12:00 and has key '...-11:00'); page_snapshot_xml '<wiki_id>/YYYYMMDD'; mediawiki_history '<wiki_id>/YYYY-MM'; pageview_complete_daily 'YYYY-MM-DD'; eval_labels 'YYYY-MM-DD'."
 - name: etag
   type: text
   nullable: true
