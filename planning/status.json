@@ -290,9 +290,9 @@
       "depends_on": [
         "M0-01"
       ],
-      "status": "review",
+      "status": "done",
       "done_check": "act -j ci (or a pushed branch) runs green; the contract job fails when a table YAML is made invalid",
-      "note": "actionlint 1.7.12 passes; run on GitHub after the first push to confirm green"
+      "note": "green on GitHub: https://github.com/akashch1013/WikiPulse/actions/runs/40628513255"
     },
     {
       "id": "M0-08",
