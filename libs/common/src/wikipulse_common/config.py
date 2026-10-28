@@ -67,6 +67,7 @@ class PostgresSettings(Section):
     port: int
     database: str
     catalog_database: str
+    dagster_database: str
     user: str
     password: SecretStr
     reader_user: str
@@ -78,6 +79,7 @@ class PostgresSettings(Section):
 
 class LakeSettings(Section):
     data_root: Path
+    catalog_schema: str
     azure_account: str
     azure_container: str
     raw_retention_days: int
